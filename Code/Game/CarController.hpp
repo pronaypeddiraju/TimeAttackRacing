@@ -30,6 +30,11 @@ public:
 	void	Steer(float analogSteer = 0.f);
 	void	Handbrake();
 
+	//For manual transmission
+	void	GearUp();
+	void	GearDown();
+	void	ReverseGear();
+
 	void	ReleaseAllControls();
 	void	ReleaseVehicle();
 private:
