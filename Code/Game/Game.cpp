@@ -41,7 +41,6 @@ bool g_debugMode = false;
 Game::Game()
 {
 	m_isGameAlive = true;
-	m_testAudioID = g_audio->CreateOrGetSound("Data/Audio/UproarLilWayne.mp3");
 
 	m_squirrelFont = g_renderContext->CreateOrGetBitmapFontFromFile("SquirrelFixedFont");
 
@@ -468,6 +467,7 @@ void Game::CreatePhysXVehicleObstacles()
 	}
 }
 
+/*
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::CreatePhysXArticulationChain()
 {
@@ -575,6 +575,7 @@ void Game::CreatePhysXArticulationChain()
 	scene->addActor(*obstacle);
 }
 
+
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::CreatePhysXChains(const Vec3& position, int length, const PxGeometry& geometry, float separation)
 {
@@ -589,7 +590,7 @@ void Game::CreatePhysXChains(const Vec3& position, int length, const PxGeometry&
 
 	g_PxPhysXSystem->CreateDampedD6Chain(position + (offsetZ * 2.f), length, geometry, separation, m_defaultDriveStiffness, m_defaultDriveDamping, m_defaultDriveForceLimit, m_isDriveAccelerating);
 }
-
+*/
 
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::CreatePhysXConvexHull()
@@ -759,11 +760,13 @@ void Game::HandleKeyPressed(unsigned char keyCode)
 		case LEFT_ARROW:
 		case SPACE_KEY:
 		{
+			/*
 			Vec3 velocity;// = m_mainCamera->GetModelMatrix().GetKVector();
 			
 			velocity = m_mainCamera->GetCameraForward() * 100.f;
 
 			g_PxPhysXSystem->CreateDynamicObject(PxSphereGeometry(3.f), velocity, m_mainCamera->GetModelMatrix(), m_dynamicObjectDensity);
+			*/
 		}
 		break;
 		case N_KEY:
@@ -970,6 +973,7 @@ void Game::Render() const
 
 	//For regular PhysX
 	//g_renderContext->BeginCamera(*m_mainCamera); 
+
 	//For Car PhysX (Vehicle SDK)
 	g_renderContext->BeginCamera(*m_carCamera);
 
@@ -999,7 +1003,6 @@ void Game::Render() const
 	g_renderContext->SetModelMatrix(m_baseQuadTransform);
 	g_renderContext->DrawMesh(m_baseQuad);
 
-	RenderIsoSprite();
 	RenderPhysXScene();
 
 	g_renderContext->EndCamera();	
@@ -1028,7 +1031,7 @@ void Game::Render() const
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::RenderUsingMaterial() const
 {
-	g_renderContext->BindMaterial(m_testMaterial);
+	g_renderContext->BindMaterial(m_couchMaterial);
 
 	//Render the cube
 	g_renderContext->SetModelMatrix(m_cubeTransform);
@@ -1118,6 +1121,7 @@ void Game::RenderPhysXCar() const
 
 		if (geometry.convexMesh->getNbVertices() == 8)
 		{
+			//This is the car because we know the car mesh is basically a box (8 verts)
 			Vec4 forwardOffsetVec4 = model.GetKBasis4() * 0.3f;
 			model.SetTBasis(g_PxPhysXSystem->PxVectorToVec(pxMat.column3) + m_offsetCarBody + forwardOffsetVec4);
 
@@ -1130,7 +1134,9 @@ void Game::RenderPhysXCar() const
 
 			if (m_debugViewCarCollider)
 			{
-				g_renderContext->SetModelMatrix(Matrix44::IDENTITY);
+				Matrix44 modelMatrix = Matrix44::IDENTITY;
+				modelMatrix.SetTranslation3D(Vec3(0.f, 100.f, 0.f), modelMatrix);
+				g_renderContext->SetModelMatrix(modelMatrix);
 				g_renderContext->BindMaterial(m_defaultMaterial);
 				AddMeshForConvexMesh(cvxMesh, *car, *shapes[shapeIndex], Rgba(1.f, 0.f, 1.f, 0.3f));
 				GPUMesh debugMesh(g_renderContext);
@@ -1138,6 +1144,17 @@ void Game::RenderPhysXCar() const
 				g_renderContext->DrawMesh(&debugMesh);
 			}
 		
+			Rgba color = Rgba(1.f, 1.f, 1.f, 1.f);
+			int numCarShapes = car->getNbShapes();;
+			std::vector<PxShape*> carShapes(numCarShapes);
+
+			car->getShapes(&carShapes[0], numCarShapes * sizeof(PxShape*), 0U);
+
+			for (int carShapeIndex = 0; carShapeIndex < numCarShapes; carShapeIndex++)
+			{
+				TODO("Render the actual colliders for the car");
+			}
+
 		}
 		else
 		{
@@ -1195,11 +1212,24 @@ void Game::RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numAct
 			break;
 			case PxGeometryType::eCONVEXMESH:
 			{
-				if (numShapes == 1)
+				//I don't want to render anything that belongs to the car rigidActor
+				//This way I render all PhysX elements except the car here and can use
+				//the RenderPhysXCar function instead for the car render
+				if (actors[actorIndex] != m_carController->GetVehicle()->getRigidDynamicActor())
 				{
 					color = GetColorForGeometry(type, sleeping);
 					AddMeshForConvexMesh(cvxMesh, *actors[actorIndex], *shapes[shapeIndex], color);
 				}
+				else
+				{
+					//Hey I asked for the debug render of the car so draw it for me!
+					if (ui_enableCarDebug)
+					{
+						color = GetColorForGeometry(type, sleeping);
+						AddMeshForConvexMesh(cvxMesh, *actors[actorIndex], *shapes[shapeIndex], color);
+					}
+				}
+
 			}
 			break;
 			case PxGeometryType::eCAPSULE:
@@ -1244,6 +1274,49 @@ void Game::RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numAct
 		g_renderContext->DrawMesh(m_pxCapMesh);
 	}
 }
+
+/*
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::RenderPhysXShapesForVehicle(const std::vector<PxShape*> shapes, int numShapes, Rgba& color) const
+{
+	for (int shapeIndex = 0; shapeIndex < numShapes; shapeIndex++)
+	{
+		int type = shapes[shapeIndex]->getGeometryType();
+
+		switch (type)
+		{
+		case PxGeometryType::eBOX:
+		{
+			color = GetColorForGeometry(type, sleeping);
+			AddMeshForPxCube(boxMesh, *shapes[shapeInd], *shapes[shapeIndex], color);
+		}
+		break;
+		case PxGeometryType::eSPHERE:
+		{
+			color = GetColorForGeometry(type, sleeping);
+			AddMeshForPxSphere(sphereMesh, *actors[actorIndex], *shapes[shapeIndex], color);
+		}
+		break;
+		case PxGeometryType::eCONVEXMESH:
+		{
+			if (numShapes == 1)
+			{
+				color = GetColorForGeometry(type, sleeping);
+				AddMeshForConvexMesh(cvxMesh, *actors[actorIndex], *shapes[shapeIndex], color);
+			}
+		}
+		break;
+		case PxGeometryType::eCAPSULE:
+		{
+			color = GetColorForGeometry(type, sleeping);
+			AddMeshForPxCapsule(capMesh, *actors[actorIndex], *shapes[shapeIndex], color);
+		}
+		break;
+		default:
+			break;
+		}
+}
+*/
 
 //------------------------------------------------------------------------------------------------------------------------------
 Rgba Game::GetColorForGeometry(int type, bool isSleeping) const
@@ -1567,8 +1640,6 @@ void Game::Update( float deltaTime )
 	m_sphereTransform = Matrix44::SetTranslation3D( Vec3(5.0f, 0.0f, 0.0f), m_sphereTransform);
 	m_quadTransfrom = Matrix44::SetTranslation3D(Vec3(0.f, 0.f, 0.f), m_quadTransfrom);
 
-	m_testDirection = m_testDirection.GetRotatedAboutYDegrees(currentTime * ui_testSlider);
-
 	UpdateImGUI();
 	UpdatePhysXCar(deltaTime);
 	UpdateCarCamera(deltaTime);
@@ -1598,29 +1669,18 @@ void Game::UpdateCarCamera(float deltaTime)
 void Game::UpdateImGUI()
 {
 	UpdateImGUIPhysXWidget();
+	UpdateImGUIDebugWidget();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::UpdateImGUIPhysXWidget()
 {
-	//Use this place to create/update info for imGui
+	//This is going to be our main PhysX Scene widget to modify car values and other stuff we may want to change
 
 	//Read Cam Position
 	ui_camPosition[0] = m_camPosition.x;
 	ui_camPosition[1] = m_camPosition.y;
 	ui_camPosition[2] = m_camPosition.z;
-
-	ui_dirLight[0] = m_directionalLightPos.x;
-	ui_dirLight[1] = m_directionalLightPos.y;
-	ui_dirLight[2] = m_directionalLightPos.z;
-
-	ui_dynamicSpawnPos[0] = m_dynamicSpawnPos.x;
-	ui_dynamicSpawnPos[1] = m_dynamicSpawnPos.y;
-	ui_dynamicSpawnPos[2] = m_dynamicSpawnPos.z;
-
-	ui_dynamicVelocity[0] = m_dynamicDropVelocity.x;
-	ui_dynamicVelocity[1] = m_dynamicDropVelocity.y;
-	ui_dynamicVelocity[2] = m_dynamicDropVelocity.z;
 
 	Vec3 cameraAngle = m_mainCamera->GetEuler();
 	float cameraAngleFloat[3];
@@ -1634,25 +1694,20 @@ void Game::UpdateImGUIPhysXWidget()
 	ui_camDistance = m_carCamera->GetDistanceValue();
 	ui_camLerpSpeed = m_carCamera->GetLerpSpeed();
 
-	ImGui::Begin("PhysX Scene Controls");                          // Create a window called "Hello, world!" and append into it.
+	float vehicleHeightOffset = m_offsetCarBody.y;
 
-	//ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-	//ImGui::Checkbox("Demo Window", &ui_testCheck1);      // Edit bools storing our window open/close state
-	//ImGui::Checkbox("Another Window", &ui_testCheck2);
+	//Create the actual ImGUI widget
+	ImGui::Begin("PhysX Scene Controls");                          
 
-	//ImGui::SliderFloat("float", &ui_testSlider, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-	ImGui::ColorEdit3("Clear Color", (float*)&ui_cameraClearColor); // Edit 3 floats representing a color
 	ImGui::DragFloat3("Main Camera Position", ui_camPosition);
 	ImGui::DragFloat3("Main Camera Angle", cameraAngleFloat);
-	ImGui::DragFloat3("Light Direction", ui_dirLight);
-	ImGui::DragFloat3("Dynamic Spawn Position", ui_dynamicSpawnPos);
-	ImGui::DragFloat3("Dynamic Spawn velocity", ui_dynamicVelocity);
 
 	ImGui::DragFloat("Camera Angle", &ui_camAngle);
 	ImGui::DragFloat("Camera Tilt", &ui_camTilt);
 	ImGui::DragFloat("Camera Height", &ui_camHeight);
 	ImGui::DragFloat("Camera Distance", &ui_camDistance);
 	ImGui::DragFloat("Camera Lerp Speed", &ui_camLerpSpeed);
+	ImGui::DragFloat("Car body height offset", &vehicleHeightOffset);
 
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
@@ -1665,14 +1720,6 @@ void Game::UpdateImGUIPhysXWidget()
 	m_directionalLightPos.y = ui_dirLight[1];
 	m_directionalLightPos.z = ui_dirLight[2];
 
-	m_dynamicSpawnPos.x = ui_dynamicSpawnPos[0];
-	m_dynamicSpawnPos.y = ui_dynamicSpawnPos[1];
-	m_dynamicSpawnPos.z = ui_dynamicSpawnPos[2];
-
-	m_dynamicDropVelocity.x = ui_dynamicVelocity[0];
-	m_dynamicDropVelocity.y = ui_dynamicVelocity[1];
-	m_dynamicDropVelocity.z = ui_dynamicVelocity[2];
-
 	m_directionalLightPos.Normalize();
 
 	m_carCamera->SetAngleValue(ui_camAngle);
@@ -1680,6 +1727,38 @@ void Game::UpdateImGUIPhysXWidget()
 	m_carCamera->SetHeightValue(ui_camHeight);
 	m_carCamera->SetDistanceValue(ui_camDistance);
 	m_carCamera->SetLerpSpeed(ui_camLerpSpeed);
+
+	m_offsetCarBody.y = vehicleHeightOffset;
+
+	ImGui::End();
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::UpdateImGUIDebugWidget()
+{
+	//Create a debug widget to enable and disbale certain things when it comes to rendering
+	//Properties in the scene or the car itself
+	
+	//Directional Light UI values
+	ui_dirLight[0] = m_directionalLightPos.x;
+	ui_dirLight[1] = m_directionalLightPos.y;
+	ui_dirLight[2] = m_directionalLightPos.z;
+	
+	ImGui::Begin("PhysX Scene Debug Widget");
+
+	ImGui::ColorEdit3("Scene Background Color", (float*)&ui_cameraClearColor); // Edit 3 floats representing a color
+	ImGui::DragFloat3("Light Direction", ui_dirLight);
+
+	ImGui::Checkbox("Enable Car Debug", &ui_enableCarDebug);
+
+	//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+	m_directionalLightPos.x = ui_dirLight[0];
+	m_directionalLightPos.y = ui_dirLight[1];
+	m_directionalLightPos.z = ui_dirLight[2];
+	m_directionalLightPos.Normalize();
+
+
 
 	ImGui::End();
 }
@@ -1694,7 +1773,7 @@ bool Game::IsAlive()
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::LoadGameMaterials()
 {
-	m_testMaterial = g_renderContext->CreateOrGetMaterialFromFile(m_materialPath);
+	m_couchMaterial = g_renderContext->CreateOrGetMaterialFromFile(m_couchMaterialPath);
 	m_defaultMaterial = g_renderContext->CreateOrGetMaterialFromFile(m_defaultMaterialPath);
 }
 
@@ -1703,6 +1782,7 @@ void Game::UpdateLightPositions()
 {
 	g_renderContext->EnableDirectionalLight(Vec3::ZERO, m_directionalLightPos);
 
+	/*
 	//Update all the 4 light positions
 	float currentTime = static_cast<float>(GetCurrentTimeSeconds());
 	DebugRenderOptionsT options;
@@ -1743,32 +1823,7 @@ void Game::UpdateLightPositions()
 	options.beginColor = Rgba::MAGENTA;
 	options.endColor = Rgba::MAGENTA * 0.4f;
 	g_debugRenderer->DebugRenderPoint(options, m_dynamicLight3Pos, 0.1f, 0.1f, nullptr);
-}
-
-//------------------------------------------------------------------------------------------------------------------------------
-void Game::RenderIsoSprite() const
-{
-	Vec2 right = Vec2(1.f, 0.f);
-	Vec2 up = Vec2(0.f, 1.f);
-
-	Vec3 mins = Vec3(-m_quadSize * 0.5f, -m_quadSize * 0.5f, 0.f);
-	Vec3 maxs = Vec3(m_quadSize * 0.5f, m_quadSize * 0.5f, 0.f);
-
-	AABB2 box = AABB2(mins, maxs);
-
-	CPUMesh mesh;
-	CPUMeshAddQuad(&mesh, AABB2(Vec2(-0.5f, -0.5f), Vec2(0.5f, 0.5f)), Rgba::WHITE);
-	m_quad->CreateFromCPUMesh<Vertex_Lit>(&mesh, GPU_MEMORY_USAGE_STATIC);
-
-	g_renderContext->BindShader(g_renderContext->CreateOrGetShaderFromFile("default_unlit.xml"));
-	//TextureView* view = def->GetTexture();
-	TextureView* view = m_laborerSheet;
-	g_renderContext->BindTextureView(0U, view);
-	g_renderContext->SetModelMatrix(m_quadTransfrom);
-
-	g_renderContext->DrawMesh(m_quad);
-
-	g_renderContext->BindTextureView(0U, nullptr);
+	*/
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1777,10 +1832,10 @@ void Game::CreateInitialLight()
 	m_directionalLightPos = Vec3(-1.f, -1.f, -1.f).GetNormalized();
 	g_renderContext->EnableDirectionalLight(Vec3(1.f, 1.f, 1.f), m_directionalLightPos);
 
-	g_renderContext->EnablePointLight(1U, m_dynamicLight0Pos, Vec3(1.f, 0.f, 0.5f),Rgba::GREEN);
-	g_renderContext->EnablePointLight(2U, m_dynamicLight1Pos, Vec3(0.f, -1.f, 0.f), Rgba::BLUE, 1.f, Vec3(0.f, 1.f, 0.f), Vec3(0.f, 0.1f, 0.f));
-	g_renderContext->EnablePointLight(3U, m_dynamicLight2Pos, Vec3(0.f, 0.f, 1.f), Rgba::YELLOW, 1.f, Vec3(0.f, 1.f, 0.1f), Vec3(0.f, 0.1f, 0.f));
-	g_renderContext->EnablePointLight(4U, m_dynamicLight3Pos, Vec3(-1.f, -1.f, 0.f), Rgba::MAGENTA, 1.f, Vec3(0.f, 0.f, 1.f), Vec3(0.f, 0.f, 1.f));
+// 	g_renderContext->EnablePointLight(1U, m_dynamicLight0Pos, Vec3(1.f, 0.f, 0.5f),Rgba::GREEN);
+// 	g_renderContext->EnablePointLight(2U, m_dynamicLight1Pos, Vec3(0.f, -1.f, 0.f), Rgba::BLUE, 1.f, Vec3(0.f, 1.f, 0.f), Vec3(0.f, 0.1f, 0.f));
+// 	g_renderContext->EnablePointLight(3U, m_dynamicLight2Pos, Vec3(0.f, 0.f, 1.f), Rgba::YELLOW, 1.f, Vec3(0.f, 1.f, 0.1f), Vec3(0.f, 0.1f, 0.f));
+// 	g_renderContext->EnablePointLight(4U, m_dynamicLight3Pos, Vec3(-1.f, -1.f, 0.f), Rgba::MAGENTA, 1.f, Vec3(0.f, 0.f, 1.f), Vec3(0.f, 0.f, 1.f));
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1847,10 +1902,6 @@ void Game::LoadGameTextures()
 	m_textureTest = g_renderContext->CreateOrGetTextureViewFromFile(m_testImagePath);
 	m_boxTexture = g_renderContext->CreateOrGetTextureViewFromFile(m_boxTexturePath);
 	m_sphereTexture = g_renderContext->CreateOrGetTextureViewFromFile(m_sphereTexturePath);
-
-	//Load the sprite sheet from texture (Need to do XML test)
-	//m_laborerSheet = g_renderContext->CreateOrGetTextureViewFromFile(m_laborerSheetPath);
-	//m_testSheet = new SpriteSheet(m_laborerSheet, m_laborerSheetDim);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

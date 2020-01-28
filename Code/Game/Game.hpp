@@ -87,13 +87,17 @@ public:
 	void								RenderPhysXScene() const;
 	void								RenderPhysXCar() const;
 	void								RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numActors, Rgba& color) const;
+	
+	//For now let's say this is no longer necessary 
+	//void								RenderPhysXShapesForVehicle(const std::vector<PxShape*> shapes, int numShapes, Rgba& color) const;
+	
 	Rgba								GetColorForGeometry(int type, bool isSleeping) const;
 	void								AddMeshForPxCube(CPUMesh& boxMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
 	void								AddMeshForPxSphere(CPUMesh& sphereMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
 	void								AddMeshForPxCapsule(CPUMesh& capMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
 	void								AddMeshForConvexMesh(CPUMesh& cvxMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
 	
-	void								RenderIsoSprite() const;
+	//void								RenderIsoSprite() const;
 	void								DebugRenderToScreen() const;
 	void								DebugRenderToCamera() const;
 	
@@ -104,6 +108,7 @@ public:
 	void								UpdateCarCamera(float deltaTime);
 	void								UpdateImGUI();
 	void								UpdateImGUIPhysXWidget();
+	void								UpdateImGUIDebugWidget();
 	void								UpdateMouseInputs(float deltaTime);
 	void								UpdateLightPositions();
 	
@@ -118,7 +123,6 @@ private:
 	CarController*						m_carController = nullptr;
 
 public:
-	SoundID								m_testAudioID = NULL;
 	
 	TextureView*						m_textureTest = nullptr;
 	TextureView*						m_boxTexture = nullptr;
@@ -138,7 +142,7 @@ public:
 	std::string							m_boxTexturePath = "woodcrate.jpg";
 	std::string							m_sphereTexturePath = "2k_earth_daymap.jpg";
 	std::string							m_xmlShaderPath = "default_unlit.xml";
-	std::string							m_materialPath = "couch.mat";
+	std::string							m_couchMaterialPath = "couch.mat";
 	std::string							m_defaultMaterialPath = "default.mat";
 	std::string							m_carMeshPath = "Car/Car.mesh";	
 	std::string							m_wheelMeshPath = "Car/Wheel.mesh";
@@ -172,32 +176,24 @@ public:
 	Matrix44							m_capsuleModel;
 
 	GPUMesh*							m_carModel = nullptr;
-	Vec4								m_offsetCarBody = Vec4(0.f, -0.9f, 0.f, 0.f);
+	Vec4								m_offsetCarBody = Vec4(0.f, -0.5f, 0.f, 0.f);
 	GPUMesh*							m_wheelModel = nullptr;
 	GPUMesh*							m_wheelFlippedModel = nullptr;
 	TextureView*						m_carDiffuse = nullptr;
 	TextureView*						m_carNormal = nullptr;
 
-	//Lighting Assignment
+	//Lighting data
 	int									m_lightSlot;
 	float								m_ambientIntensity = 1.f;
 	float								m_ambientStep = 0.1f;
 
-	bool								m_enableDirectional = true;
+	bool								m_enableDirectional = false;
 	bool								m_normalMode = false;
 
-	//Light positions
-	Vec3								m_dynamicLight0Pos = Vec3::ZERO;
-	Vec3								m_dynamicLight1Pos = Vec3::ZERO;
-	Vec3								m_dynamicLight2Pos = Vec3::ZERO;
-	Vec3								m_dynamicLight3Pos = Vec3::ZERO;
 	Vec3								m_directionalLightPos;
 
-	//Light movement
-	float								m_ySpeed = 2.f;
-
 	//Material
-	Material*							m_testMaterial = nullptr;
+	Material*							m_couchMaterial = nullptr;
 	Material*							m_defaultMaterial = nullptr;
 	bool								m_useMaterial = true;
 
@@ -223,14 +219,11 @@ public:
 	float								ui_camDistance = 10.f;
 	float								ui_camLerpSpeed = 0.1f;
 
+	bool								ui_enableCarDebug = false;
+
 	//------------------------------------------------------------------------------------------------------------------------------
 	// PhysX Test Variables
 	//------------------------------------------------------------------------------------------------------------------------------
-
-	float								m_anotherTestTempHackStackZ = 10.0f;
-	float								m_dynamicObjectDensity = 100.f;
-	PxRigidActor*						m_pxConvexActor = nullptr;
-	PxMaterial*							m_pxConvexMaterial = nullptr;
 
 	//PhysX Meshes
 	GPUMesh*							m_pxCube = nullptr;
@@ -238,53 +231,7 @@ public:
 	GPUMesh*							m_pxConvexMesh = nullptr;
 	GPUMesh*							m_pxCapMesh = nullptr;
 
-	//For joints
-	float								m_defaultConeFreedomY = 45.f;
-	float								m_defaultConeFreedomZ = 45.f;
-	float								m_defaultContactDistance = 0.05f;
-	float								m_defaultBreakForce = 1000.f;
-	float								m_defaultBreakTorque = 100000.f;
-	float								m_defaultDriveStiffness = 0.f;
-	float								m_defaultDriveDamping = 1000.f;
-	float								m_defaultDriveForceLimit = FLT_MAX;
-	bool								m_isDriveAccelerating = true ;
-
-	Vec3								m_chainPosition = Vec3(-50.0f, 20.0f, 50.0f);
-	int									m_chainLength = 5;
-	float								m_chainSeperation = 4;
-
-	//For Articulation
-	float								m_articulationScale = 0.25f;
-	int									m_numCapsules = 40;
-	float								m_capsuleMass = 1.f;
-
-	float								m_linkLinearDamping = 0.1f;
-	float								m_linkAngularDamping = 0.1f;
-	float								m_linkMaxLinearVelocity = 100.f;
-	float								m_linkMaxAngularVelocity = 30.f;
-
-	float								m_weightMass = 50.f;
-	float								m_weightSize = 1.f;
-
 	bool								m_debugViewCarCollider = false;
-
-	//------------------------------------------------------------------------------------------------------------------------------
-	// Iso Sprite Test Variables
-	//------------------------------------------------------------------------------------------------------------------------------
-
-	Vec2								m_position = Vec2::ZERO;
-	Vec2								m_targetPosition = Vec2::ZERO;
-	std::string							m_laborerSheetPath = "Laborer_spriteshee_2k.png";
-	TextureView*						m_laborerSheet = nullptr;
-	IntVec2								m_laborerSheetDim = IntVec2(16, 16);
-	SpriteSheet* 						m_testSheet = nullptr;
-	IsoSpriteDefenition*				m_isoSprite = nullptr;
-
-	float								m_quadSize = 1.f;
-
-	Vec3								m_testDirection = Vec3(0.f, 0.f, 1.f);
-	Vec3								m_dynamicSpawnPos = Vec3(0.f, 40.f, 100.f);
-	Vec3								m_dynamicDropVelocity = Vec3(0.f, -40.f, 100.f);
 
 	//------------------------------------------------------------------------------------------------------------------------------
 	//Car Camera and other game data
