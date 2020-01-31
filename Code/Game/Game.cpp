@@ -971,11 +971,16 @@ void Game::Render() const
 	camTransform = Matrix44::SetTranslation3D(m_camPosition, camTransform);
 	m_mainCamera->SetModelMatrix(camTransform);
 
-	//For regular PhysX
-	//g_renderContext->BeginCamera(*m_mainCamera); 
-
-	//For Car PhysX (Vehicle SDK)
-	g_renderContext->BeginCamera(*m_carCamera);
+	if (ui_swapToMainCamera)
+	{
+		//For regular PhysX camera
+		g_renderContext->BeginCamera(*m_mainCamera); 
+	}
+	else
+	{
+		//For Car Camera view
+		g_renderContext->BeginCamera(*m_carCamera);
+	}
 
 	g_renderContext->ClearColorTargets(Rgba(ui_cameraClearColor[0], ui_cameraClearColor[1], ui_cameraClearColor[2], 1.f));
 
@@ -1003,7 +1008,9 @@ void Game::Render() const
 	g_renderContext->SetModelMatrix(m_baseQuadTransform);
 	g_renderContext->DrawMesh(m_baseQuad);
 
+
 	RenderPhysXScene();
+	//RenderRacetrack();
 
 	g_renderContext->EndCamera();	
 
@@ -1026,6 +1033,16 @@ void Game::Render() const
 		g_devConsole->Render(*g_renderContext, *m_devConsoleCamera, DEVCONSOLE_LINE_HEIGHT);
 	}	
 
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::RenderRacetrack() const
+{
+	//Render the Quad
+	g_renderContext->BindMaterial(m_defaultMaterial);
+	g_renderContext->BindTextureViewWithSampler(0U, nullptr);
+	g_renderContext->SetModelMatrix(m_racetrackTransform);
+	g_renderContext->DrawMesh(m_trackPieceModel);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1640,6 +1657,8 @@ void Game::Update( float deltaTime )
 	m_sphereTransform = Matrix44::SetTranslation3D( Vec3(5.0f, 0.0f, 0.0f), m_sphereTransform);
 	m_quadTransfrom = Matrix44::SetTranslation3D(Vec3(0.f, 0.f, 0.f), m_quadTransfrom);
 
+	m_racetrackTransform = Matrix44::SetTranslation3D(m_racetrackTranslation, m_racetrackTransform);
+
 	UpdateImGUI();
 	UpdatePhysXCar(deltaTime);
 	UpdateCarCamera(deltaTime);
@@ -1744,10 +1763,17 @@ void Game::UpdateImGUIDebugWidget()
 	ui_dirLight[1] = m_directionalLightPos.y;
 	ui_dirLight[2] = m_directionalLightPos.z;
 	
+	//Track piece translation 
+	ui_racetrackTranslation[0] = m_racetrackTranslation.x;
+	ui_racetrackTranslation[1] = m_racetrackTranslation.y;
+	ui_racetrackTranslation[2] = m_racetrackTranslation.z;
+
 	ImGui::Begin("PhysX Scene Debug Widget");
 
 	ImGui::ColorEdit3("Scene Background Color", (float*)&ui_cameraClearColor); // Edit 3 floats representing a color
 	ImGui::DragFloat3("Light Direction", ui_dirLight);
+	ImGui::Checkbox("Enable Debug Camera", &ui_swapToMainCamera);
+	ImGui::DragFloat3("Track Translation", ui_racetrackTranslation);
 
 	ImGui::Checkbox("Enable Car Debug", &ui_enableCarDebug);
 
@@ -1758,7 +1784,9 @@ void Game::UpdateImGUIDebugWidget()
 	m_directionalLightPos.z = ui_dirLight[2];
 	m_directionalLightPos.Normalize();
 
-
+	m_racetrackTranslation.x = ui_racetrackTranslation[0];
+	m_racetrackTranslation.y = ui_racetrackTranslation[1];
+	m_racetrackTranslation.z = ui_racetrackTranslation[2];
 
 	ImGui::End();
 }
@@ -1893,6 +1921,8 @@ void Game::CreateInitialMeshes()
 	m_carModel = g_renderContext->CreateOrGetMeshFromFile(m_carMeshPath);
 	m_wheelModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelMeshPath);
 	m_wheelFlippedModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelFlippedMeshPath);
+
+	m_trackPieceModel = g_renderContext->CreateOrGetMeshFromFile(m_trackAngledPath);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1902,6 +1932,7 @@ void Game::LoadGameTextures()
 	m_textureTest = g_renderContext->CreateOrGetTextureViewFromFile(m_testImagePath);
 	m_boxTexture = g_renderContext->CreateOrGetTextureViewFromFile(m_boxTexturePath);
 	m_sphereTexture = g_renderContext->CreateOrGetTextureViewFromFile(m_sphereTexturePath);
+
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

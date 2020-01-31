@@ -2,10 +2,10 @@
 	src="Track/angled.obj"
 	invert="false"
 	tangents="true"
-	scale = "0.025f"
+	scale = "10.f"
 	transform="x y -z">
 
 	<material index="0" src="Track/angled.mat" />
 
-	<collision index="0" src="Track/angled_collision1.obj" />
+	<collision index="0" src="Track/angled_collision1.mesh" />
 </mesh>

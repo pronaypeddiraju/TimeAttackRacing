@@ -56,7 +56,7 @@ public:
 	void								SetupCameras();
 	void								GetandSetShaders();
 	void								LoadGameTextures();
-	void								CreateIsoSpriteDefenitions();
+	//void								CreateIsoSpriteDefenitions();
 	void								LoadGameMaterials();
 	void								CreateInitialMeshes();
 	void								CreateInitialLight();
@@ -67,8 +67,8 @@ public:
 	void								CreateObstacleWall(const int numHorizontalBoxes, const int numVerticalBoxes, const float boxSize, const PxVec3& pos, const PxQuat& quat);
 	void								CreatePhysXVehicleRamp();
 	void								CreatePhysXVehicleObstacles();
-	void								CreatePhysXArticulationChain();
-	void								CreatePhysXChains(const Vec3& position, int length, const PxGeometry& geometry, float separation);
+	//void								CreatePhysXArticulationChain();
+	//void								CreatePhysXChains(const Vec3& position, int length, const PxGeometry& geometry, float separation);
 	void								CreatePhysXConvexHull();
 	void								CreatePhysXStack(const Vec3& position, uint size, float halfExtent);
 
@@ -82,6 +82,7 @@ public:
 	void								Shutdown();
 
 	void								Render() const;
+	void								RenderRacetrack() const;
 	void								RenderUsingMaterial() const;
 	
 	void								RenderPhysXScene() const;
@@ -135,18 +136,27 @@ public:
 	Shader*								m_shader = nullptr;
 	Shader*								m_normalShader = nullptr;
 	Shader*								m_defaultLit = nullptr;
-	std::string							m_defaultShaderPath = "default_unlit.00.hlsl";
-	std::string							m_shaderLitPath = "default_lit.hlsl";
-	std::string							m_normalColorShader = "normal_shader.hlsl";
+	
+	//Image Paths
 	std::string							m_testImagePath = "Test_StbiFlippedAndOpenGL.png";
 	std::string							m_boxTexturePath = "woodcrate.jpg";
 	std::string							m_sphereTexturePath = "2k_earth_daymap.jpg";
+	
+	//Shader Paths
+	std::string							m_shaderLitPath = "default_lit.hlsl";
+	std::string							m_defaultShaderPath = "default_unlit.00.hlsl";
+	std::string							m_normalColorShader = "normal_shader.hlsl";
 	std::string							m_xmlShaderPath = "default_unlit.xml";
+	
+	//Material Paths
 	std::string							m_couchMaterialPath = "couch.mat";
 	std::string							m_defaultMaterialPath = "default.mat";
+
+	//Mesh Paths
 	std::string							m_carMeshPath = "Car/Car.mesh";	
 	std::string							m_wheelMeshPath = "Car/Wheel.mesh";
 	std::string							m_wheelFlippedMeshPath = "Car/WheelFlipped.mesh";
+	std::string							m_trackAngledPath = "Track/angled.mesh";
 
 	Camera*								m_mainCamera = nullptr;
 	Camera*								m_devConsoleCamera = nullptr;
@@ -175,6 +185,10 @@ public:
 	GPUMesh*							m_capsule = nullptr;
 	Matrix44							m_capsuleModel;
 
+	//------------------------------------------------------------------------------------------------------------------------------
+	// PhysX Meshes and Textures used by car and other PhysX objects
+	//------------------------------------------------------------------------------------------------------------------------------
+
 	GPUMesh*							m_carModel = nullptr;
 	Vec4								m_offsetCarBody = Vec4(0.f, -0.5f, 0.f, 0.f);
 	GPUMesh*							m_wheelModel = nullptr;
@@ -182,7 +196,16 @@ public:
 	TextureView*						m_carDiffuse = nullptr;
 	TextureView*						m_carNormal = nullptr;
 
+	GPUMesh*							m_trackPieceModel = nullptr;
+	GPUMesh*							m_trackPieceCollisionMesh = nullptr;
+	TextureView*						m_trackPieceDiffuse = nullptr;
+	Vec3								m_racetrackTranslation = Vec3(0.f, 0.f, 0.f);
+	Matrix44							m_racetrackTransform;
+
+	//------------------------------------------------------------------------------------------------------------------------------
 	//Lighting data
+	//------------------------------------------------------------------------------------------------------------------------------
+	
 	int									m_lightSlot;
 	float								m_ambientIntensity = 1.f;
 	float								m_ambientStep = 0.1f;
@@ -220,6 +243,8 @@ public:
 	float								ui_camLerpSpeed = 0.1f;
 
 	bool								ui_enableCarDebug = false;
+	bool								ui_swapToMainCamera = false;
+	float								ui_racetrackTranslation[3] = { 0.f, 0.f, 0.f };
 
 	//------------------------------------------------------------------------------------------------------------------------------
 	// PhysX Test Variables
