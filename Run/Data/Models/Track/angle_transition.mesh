@@ -2,7 +2,7 @@
 	src="Car/Rally_Fighter.obj"
 	invert="false"
 	tangents="true"
-	scale = "0.025f"
+	scale = "10.f"
 	transform="x y -z">
 
 	<material index="0" src="Car/Car.mat" />
