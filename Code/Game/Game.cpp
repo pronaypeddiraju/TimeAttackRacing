@@ -79,8 +79,6 @@ void Game::StartUp()
 	g_eventSystem->SubscribeEventCallBackFn("ToggleLight4", ToggleLight4);
 	g_eventSystem->SubscribeEventCallBackFn("ToggleAllPointLights", ToggleAllPointLights);
 
-	CreateInitialMeshes();
-
 	CreateInitialLight();
 
 	//Only to keep track of what input does what
@@ -89,6 +87,8 @@ void Game::StartUp()
 
 	m_carController = new CarController();
 	SetupPhysX();	
+
+	CreateInitialMeshes();
 
 	Vec3 camEuler = Vec3(-12.5f, -196.f, 0.f);
 	m_mainCamera->SetEuler(camEuler);
@@ -1010,7 +1010,7 @@ void Game::Render() const
 
 
 	RenderPhysXScene();
-	//RenderRacetrack();
+	RenderRacetrack();
 
 	g_renderContext->EndCamera();	
 

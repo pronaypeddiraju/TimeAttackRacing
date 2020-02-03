@@ -1,0 +1,9 @@
+<mesh id="PhysX/angled_collision1"
+	src="Track/angled_collision1.obj"
+	invert="false"
+	tangents="true"
+	scale = "10.f"
+	transform="x y -z">
+
+	<material index="0" src="Track/angled.mat" />
+</mesh>
