@@ -157,6 +157,9 @@ public:
 	std::string							m_wheelMeshPath = "Car/Wheel.mesh";
 	std::string							m_wheelFlippedMeshPath = "Car/WheelFlipped.mesh";
 	std::string							m_trackAngledPath = "Track/angled.mesh";
+	std::string							m_trackJumpPath = "Track/jump1.mesh";
+	std::string							m_trackTestPath = "ScaledTrack/ScaledTrack1RoadOnly.mesh";
+	std::string							m_trackCollisionsTestPath = "ScaledTrack/ScaledTrack1CollidersOnly.mesh";
 
 	Camera*								m_mainCamera = nullptr;
 	Camera*								m_devConsoleCamera = nullptr;
@@ -197,11 +200,18 @@ public:
 	TextureView*						m_carNormal = nullptr;
 
 	GPUMesh*							m_trackPieceModel = nullptr;
-	GPUMesh*							m_trackPieceCollisionMesh = nullptr;
-	TextureView*						m_trackPieceDiffuse = nullptr;
 	Vec3								m_racetrackTranslation = Vec3(0.f, 0.f, 0.f);
 	Matrix44							m_racetrackTransform;
 
+	//GPUMesh*							m_trackJumpPiece = nullptr;
+	//Vec3								m_jumpPieceTranslation = Vec3(0.f, 0.f, 0.f);
+	//Matrix44							m_jumpPieceTransform;
+
+	GPUMesh*							m_trackTestModel = nullptr;
+	GPUMesh*							m_trackCollidersTestModel = nullptr;
+	Vec3								m_trackTestTranslation = Vec3(0.f, 0.f, 0.f);
+	Matrix44							m_trackTestTransform;
+	
 	//------------------------------------------------------------------------------------------------------------------------------
 	//Lighting data
 	//------------------------------------------------------------------------------------------------------------------------------
@@ -245,6 +255,8 @@ public:
 	bool								ui_enableCarDebug = false;
 	bool								ui_swapToMainCamera = false;
 	float								ui_racetrackTranslation[3] = { 0.f, 0.f, 0.f };
+
+	bool								ui_enableConvexHullRenders = false;
 
 	//------------------------------------------------------------------------------------------------------------------------------
 	// PhysX Test Variables

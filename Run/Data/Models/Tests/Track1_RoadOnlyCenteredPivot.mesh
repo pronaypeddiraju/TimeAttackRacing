@@ -1,0 +1,11 @@
+<mesh id="PhysX/trackRoadOnly"
+	src="Tests/Track1_RoadOnlyCenteredPivot.obj"
+	invert="false"
+	tangents="true"
+	scale = "1.f"
+	transform="x y -z"
+	position = "0.f, 0.f, 0.f">
+
+	<material index="0" src="Tests/defaultTrack.mat" />
+
+</mesh>

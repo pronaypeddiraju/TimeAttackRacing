@@ -27,7 +27,8 @@ void CarCamera::Update(const Vec3& carForward, float deltaTime)
 
 	m_targetPosition = m_focalPoint + offset;
 	//We will lerp this value to m_target position next
-	m_camPosition = Vec3::LerpVector(m_camPosition, m_targetPosition, m_lerpSpeed * deltaTime);
+	float lerpFraction = Clamp(m_lerpSpeed * deltaTime, 0.f, 1.f);
+	m_camPosition = Vec3::LerpVector(m_camPosition, m_targetPosition, lerpFraction);
 	//m_camPosition = m_focalPoint + offset;
 
 	//Give me a model matrix of something at offset looking at the focal point. This is now my model matrix

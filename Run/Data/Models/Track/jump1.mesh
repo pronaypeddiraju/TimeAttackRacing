@@ -1,0 +1,19 @@
+<mesh id="PhysX/trackJump1"
+	src="Track/jump1.obj"
+	invert="false"
+	tangents="true"
+	scale = "10.f"
+	transform="x y -z"
+	position ="0.f, 0.f, 0.f">
+
+	<material index="0" src="Track/angled.mat" />
+
+	<collision index="0" src="Track/jump1_collision1.mesh" physXFlags = "obstacle"/>
+	<collision index="1" src="Track/jump1_collision2.mesh" physXFlags = "obstacle"/>
+	<collision index="2" src="Track/jump1_collision3.mesh" physXFlags = "obstacle"/>
+	<collision index="3" src="Track/jump1_collision4_surface.mesh" physXFlags = "drivableSurface"/>
+	<collision index="4" src="Track/jump1_collision5.mesh" physXFlags = "obstacle"/>
+	<collision index="5" src="Track/jump1_collision6.mesh" physXFlags = "obstacle"/>
+	<collision index="6" src="Track/jump1_collision7.mesh" physXFlags = "obstacle"/>
+
+</mesh>

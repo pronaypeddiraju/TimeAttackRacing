@@ -2,6 +2,8 @@
 #include "Game/App.hpp"
 //Engine Systems
 #include "Engine/Audio/AudioSystem.hpp"
+#include "Engine/Commons/EngineCommon.hpp"
+#include "Engine/Commons/Profiler/Profiler.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EventSystems.hpp"
 #include "Engine/Core/NamedStrings.hpp"
@@ -85,6 +87,15 @@ void App::StartUp()
 
 	g_RNG = new RandomNumberGenerator(0);
 
+#if defined(_DEBUG)
+	{
+		g_LogSystem = new LogSystem(LOG_PATH);
+		g_LogSystem->LogSystemInit();
+
+		gProfiler->ProfilerInitialize();
+	}
+#endif
+
 	m_game = new Game();
 	m_game->StartUp();
 	
@@ -120,6 +131,16 @@ void App::ShutDown()
 	delete g_RNG;
 	g_RNG = nullptr;
 
+#if defined(_DEBUG)
+	{
+		g_LogSystem->LogSystemShutDown();
+		delete g_LogSystem;
+		g_LogSystem = nullptr;
+
+		gProfiler->ProfilerShutdown();
+	}
+#endif
+
 	m_game->Shutdown();
 }
 
@@ -137,6 +158,8 @@ void App::RunFrame()
 
 void App::BeginFrame()
 {
+	gProfiler->ProfilerBeginFrame("App::BeginFrame");
+
 	g_renderContext->BeginFrame();
 	g_inputSystem->BeginFrame();
 	g_audio->BeginFrame();
@@ -157,10 +180,14 @@ void App::EndFrame()
 	g_debugRenderer->EndFrame();
 	g_ImGUI->EndFrame();
 	g_PxPhysXSystem->EndFrame();
+
+	gProfiler->ProfilerEndFrame();
 }
 
 void App::Update()
 {	
+	gProfiler->ProfilerUpdate();
+
 	m_timeAtLastFrameBegin = m_timeAtThisFrameBegin;
 	m_timeAtThisFrameBegin = GetCurrentTimeSeconds();
 
@@ -175,11 +202,11 @@ void App::Update()
 	//DEBUG
 	//deltaTime = 1.f / 60.f;
 
-	text = "Frame Rate %f";
-	g_debugRenderer->DebugAddToLog(options, text, Rgba::WHITE, 0.f, (1.f / deltaTime));
+	//text = "Frame Rate %f";
+	//g_debugRenderer->DebugAddToLog(options, text, Rgba::WHITE, 0.f, (1.f / deltaTime));
 
-	text = "Delta Time %f";
-	g_debugRenderer->DebugAddToLog(options, text, Rgba::WHITE, 0.f, deltaTime);
+	//text = "Delta Time %f";
+	//g_debugRenderer->DebugAddToLog(options, text, Rgba::WHITE, 0.f, deltaTime);
 
 	g_devConsole->UpdateConsole(deltaTime);
 	g_PxPhysXSystem->Update(deltaTime);

@@ -1,0 +1,122 @@
+<mesh id="PhysX/ScaledTrack1Colliders"
+	src="ScaledTrack/ScaledTrack1CollidersOnly.obj"
+	invert="false"
+	tangents="true"
+	scale = "1.f"
+	transform="x y -z"
+	position = "0.f, 0.f, 0.f">
+
+	<material index="0" src="ScaledTrack/defaultTrack.mat" />
+
+	
+	<collision index="0" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_1.mesh" physXFlags = "obstacle"/>
+	<collision index="1" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_2.mesh" physXFlags = "obstacle"/>
+	<collision index="2" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_3.mesh" physXFlags = "obstacle"/>
+	<collision index="3" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_4.mesh" physXFlags = "obstacle"/>
+	<collision index="4" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_5.mesh" physXFlags = "obstacle"/>
+	<collision index="5" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_6.mesh" physXFlags = "obstacle"/>
+	<collision index="6" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_7.mesh" physXFlags = "obstacle"/>
+	<collision index="7" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_8.mesh" physXFlags = "obstacle"/>
+	<collision index="8" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_9.mesh" physXFlags = "obstacle"/>
+	<collision index="9" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_10.mesh" physXFlags = "obstacle"/>
+
+	<collision index="10" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_11.mesh" physXFlags = "obstacle"/>
+	<collision index="11" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_12.mesh" physXFlags = "obstacle"/>
+	<collision index="12" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_13.mesh" physXFlags = "obstacle"/>
+	<collision index="13" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_14.mesh" physXFlags = "obstacle"/>
+	<collision index="14" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_15.mesh" physXFlags = "obstacle"/>
+	<collision index="15" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_16.mesh" physXFlags = "obstacle"/>
+	<collision index="16" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_17.mesh" physXFlags = "obstacle"/>
+	<collision index="17" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_18.mesh" physXFlags = "obstacle"/>
+	<collision index="18" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_19.mesh" physXFlags = "obstacle"/>
+	<collision index="19" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_20.mesh" physXFlags = "obstacle"/>
+
+	<collision index="20" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_21.mesh" physXFlags = "obstacle"/>
+	<collision index="21" src="ScaledTrack/SimplexCollisions/ScaledTrack1_Simplex_22.mesh" physXFlags = "obstacle"/>
+
+	<collision index="98" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_9.mesh" physXFlags = "obstacle"/>
+	<collision index="99" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_10.mesh" physXFlags = "obstacle"/>
+	<collision index="910" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_11.mesh" physXFlags = "obstacle"/>
+	<collision index="911" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_12.mesh" physXFlags = "obstacle"/>
+	<collision index="912" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_13.mesh" physXFlags = "obstacle"/>
+	<collision index="913" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_14.mesh" physXFlags = "obstacle"/>
+	<collision index="914" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_15.mesh" physXFlags = "obstacle"/>
+	<collision index="915" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_16.mesh" physXFlags = "obstacle"/>
+	<collision index="916" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_17.mesh" physXFlags = "obstacle"/>
+	<collision index="917" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_18.mesh" physXFlags = "obstacle"/>
+	<collision index="918" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_19.mesh" physXFlags = "obstacle"/>
+	<collision index="919" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_20.mesh" physXFlags = "obstacle"/>
+	
+	<collision index="20" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_21.mesh" physXFlags = "obstacle"/>
+
+	<collision index="63" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_RoadPiece_1.mesh" physXFlags = "obstacle"/>
+	<collision index="64" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_RoadPiece_2.mesh" physXFlags = "obstacle"/>
+	<collision index="65" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_RoadPiece_3.mesh" physXFlags = "obstacle"/>
+	<collision index="66" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_RoadPiece_4.mesh" physXFlags = "obstacle"/>
+	<collision index="67" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_RoadPiece_5.mesh" physXFlags = "obstacle"/>
+	<collision index="68" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_RoadPiece_6.mesh" physXFlags = "obstacle"/>
+	
+</mesh>
+
+
+
+<!--
+
+	<collision index="0" src="ScaledTrack/ScaledTrack1_Collider_1.mesh" physXFlags = "obstacle"/>
+	<collision index="1" src="ScaledTrack/ScaledTrack1_Collider_2.mesh" physXFlags = "obstacle"/>
+	<collision index="2" src="ScaledTrack/ScaledTrack1_Collider_3.mesh" physXFlags = "obstacle"/>
+	<collision index="3" src="ScaledTrack/ScaledTrack1_Collider_4.mesh" physXFlags = "obstacle"/>
+	<collision index="4" src="ScaledTrack/ScaledTrack1_Collider_5.mesh" physXFlags = "obstacle"/>
+	<collision index="5" src="ScaledTrack/ScaledTrack1_Collider_6.mesh" physXFlags = "obstacle"/>
+	<collision index="6" src="ScaledTrack/ScaledTrack1_Collider_7.mesh" physXFlags = "obstacle"/>
+	<collision index="7" src="ScaledTrack/ScaledTrack1_Collider_8.mesh" physXFlags = "obstacle"/>
+	<collision index="8" src="ScaledTrack/ScaledTrack1_Collider_9.mesh" physXFlags = "obstacle"/>
+
+	<collision index="21" src="ScaledTrack/ScaledTrack1_Collider_22.mesh" physXFlags = "obstacle"/>
+	<collision index="22" src="ScaledTrack/ScaledTrack1_Collider_23.mesh" physXFlags = "obstacle"/>
+	<collision index="23" src="ScaledTrack/ScaledTrack1_Collider_24.mesh" physXFlags = "obstacle"/>
+	<collision index="24" src="ScaledTrack/ScaledTrack1_Collider_25.mesh" physXFlags = "obstacle"/>
+	<collision index="25" src="ScaledTrack/ScaledTrack1_Collider_26.mesh" physXFlags = "obstacle"/>
+	<collision index="26" src="ScaledTrack/ScaledTrack1_Collider_27.mesh" physXFlags = "obstacle"/>
+	<collision index="27" src="ScaledTrack/ScaledTrack1_Collider_28.mesh" physXFlags = "obstacle"/>
+	<collision index="28" src="ScaledTrack/ScaledTrack1_Collider_29.mesh" physXFlags = "obstacle"/>
+	
+	<collision index="29" src="ScaledTrack/ScaledTrack1_Collider_30.mesh" physXFlags = "obstacle"/>
+	<collision index="30" src="ScaledTrack/ScaledTrack1_Collider_31.mesh" physXFlags = "obstacle"/>
+	<collision index="31" src="ScaledTrack/ScaledTrack1_Collider_32.mesh" physXFlags = "obstacle"/>
+	<collision index="32" src="ScaledTrack/ScaledTrack1_Collider_33.mesh" physXFlags = "obstacle"/>
+	<collision index="33" src="ScaledTrack/ScaledTrack1_Collider_34.mesh" physXFlags = "obstacle"/>
+	<collision index="34" src="ScaledTrack/ScaledTrack1_Collider_35.mesh" physXFlags = "obstacle"/>
+	<collision index="35" src="ScaledTrack/ScaledTrack1_Collider_36.mesh" physXFlags = "obstacle"/>
+	<collision index="36" src="ScaledTrack/ScaledTrack1_Collider_37.mesh" physXFlags = "obstacle"/>
+	<collision index="37" src="ScaledTrack/ScaledTrack1_Collider_38.mesh" physXFlags = "obstacle"/>
+	<collision index="38" src="ScaledTrack/ScaledTrack1_Collider_39.mesh" physXFlags = "obstacle"/>
+
+	<collision index="39" src="ScaledTrack/ScaledTrack1_Collider_40.mesh" physXFlags = "obstacle"/>
+	<collision index="40" src="ScaledTrack/ScaledTrack1_Collider_41.mesh" physXFlags = "obstacle"/>
+	<collision index="41" src="ScaledTrack/ScaledTrack1_Collider_42.mesh" physXFlags = "obstacle"/>
+	<collision index="42" src="ScaledTrack/ScaledTrack1_Collider_43.mesh" physXFlags = "obstacle"/>
+	<collision index="43" src="ScaledTrack/ScaledTrack1_Collider_44.mesh" physXFlags = "obstacle"/>
+	<collision index="44" src="ScaledTrack/ScaledTrack1_Collider_45.mesh" physXFlags = "obstacle"/>
+	<collision index="45" src="ScaledTrack/ScaledTrack1_Collider_46.mesh" physXFlags = "obstacle"/>
+	<collision index="46" src="ScaledTrack/ScaledTrack1_Collider_47.mesh" physXFlags = "obstacle"/>
+	<collision index="47" src="ScaledTrack/ScaledTrack1_Collider_48.mesh" physXFlags = "obstacle"/>
+	<collision index="48" src="ScaledTrack/ScaledTrack1_Collider_49.mesh" physXFlags = "obstacle"/>
+
+	<collision index="49" src="ScaledTrack/ScaledTrack1_Collider_50.mesh" physXFlags = "obstacle"/>
+	<collision index="50" src="ScaledTrack/ScaledTrack1_Collider_51.mesh" physXFlags = "obstacle"/>
+	<collision index="51" src="ScaledTrack/ScaledTrack1_Collider_52.mesh" physXFlags = "obstacle"/>
+	<collision index="52" src="ScaledTrack/ScaledTrack1_Collider_53.mesh" physXFlags = "obstacle"/>
+	<collision index="53" src="ScaledTrack/ScaledTrack1_Collider_54.mesh" physXFlags = "obstacle"/>
+	<collision index="54" src="ScaledTrack/ScaledTrack1_Collider_55.mesh" physXFlags = "obstacle"/>
+	<collision index="55" src="ScaledTrack/ScaledTrack1_Collider_56.mesh" physXFlags = "obstacle"/>
+	<collision index="56" src="ScaledTrack/ScaledTrack1_Collider_57.mesh" physXFlags = "obstacle"/>
+	<collision index="57" src="ScaledTrack/ScaledTrack1_Collider_58.mesh" physXFlags = "obstacle"/>
+	<collision index="58" src="ScaledTrack/ScaledTrack1_Collider_59.mesh" physXFlags = "obstacle"/>
+
+	<collision index="59" src="ScaledTrack/ScaledTrack1_Collider_60.mesh" physXFlags = "obstacle"/>
+	<collision index="60" src="ScaledTrack/ScaledTrack1_Collider_61.mesh" physXFlags = "obstacle"/>
+	<collision index="61" src="ScaledTrack/ScaledTrack1_Collider_62.mesh" physXFlags = "obstacle"/>
+	<collision index="62" src="ScaledTrack/ScaledTrack1_Collider_63.mesh" physXFlags = "obstacle"/>
+
+-->

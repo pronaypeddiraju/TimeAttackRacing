@@ -1,0 +1,13 @@
+<mesh id="PhysX/trackRampExtension"
+	src="Track/ramp_extension.obj"
+	invert="false"
+	tangents="true"
+	scale = "10.f"
+	transform="x y -z"
+	position = "100.f, 10.f, 20.f">
+
+	<material index="0" src="Track/angled.mat" />
+
+	<collision index="0" src="Track/ramp_extension_collision.mesh" physXFlags = "obstacle"/>
+
+</mesh>

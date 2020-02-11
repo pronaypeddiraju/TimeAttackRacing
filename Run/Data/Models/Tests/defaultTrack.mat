@@ -1,0 +1,9 @@
+<material id="PhysX/trackMat"
+  shader="default_lit.xml">
+
+  <diffuse  src="" />
+  <normal   src="" />
+
+  <sampler idx="0" type="linear" />
+
+</material>

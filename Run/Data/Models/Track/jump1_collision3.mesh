@@ -1,0 +1,10 @@
+<mesh id="PhysX/jump1_collision3"
+	src="Track/jump1_collision3.obj"
+	invert="false"
+	tangents="true"
+	scale = "10.f"
+	transform="x y -z">
+
+	<material index="0" src="Track/angled.mat" />
+
+</mesh>

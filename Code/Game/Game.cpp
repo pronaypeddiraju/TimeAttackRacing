@@ -329,9 +329,10 @@ void Game::SetupPhysX()
 	*/
 
 	//Vehicle SDK only
-	CreatePhysXVehicleObstacles();
+	//CreatePhysXVehicleObstacles();
+	//CreatePhysXVehicleBoxWall();
+	
 	CreatePhysXVehicleRamp();
-	CreatePhysXVehicleBoxWall();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1039,10 +1040,18 @@ void Game::Render() const
 void Game::RenderRacetrack() const
 {
 	//Render the Quad
-	g_renderContext->BindMaterial(m_defaultMaterial);
+	//g_renderContext->BindMaterial(m_couchMaterial);
+	//g_renderContext->BindTextureViewWithSampler(0U, nullptr);
+	//g_renderContext->SetModelMatrix(m_racetrackTransform);
+	//g_renderContext->DrawMesh(m_trackPieceModel);
+
+// 	g_renderContext->SetModelMatrix(m_jumpPieceTransform);
+// 	g_renderContext->DrawMesh(m_trackJumpPiece);
+
+	g_renderContext->BindMaterial(m_couchMaterial);
 	g_renderContext->BindTextureViewWithSampler(0U, nullptr);
-	g_renderContext->SetModelMatrix(m_racetrackTransform);
-	g_renderContext->DrawMesh(m_trackPieceModel);
+	g_renderContext->SetModelMatrix(m_trackTestTransform);
+	g_renderContext->DrawMesh(m_trackTestModel);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1164,14 +1173,6 @@ void Game::RenderPhysXCar() const
 			Rgba color = Rgba(1.f, 1.f, 1.f, 1.f);
 			int numCarShapes = car->getNbShapes();;
 			std::vector<PxShape*> carShapes(numCarShapes);
-
-			car->getShapes(&carShapes[0], numCarShapes * sizeof(PxShape*), 0U);
-
-			for (int carShapeIndex = 0; carShapeIndex < numCarShapes; carShapeIndex++)
-			{
-				TODO("Render the actual colliders for the car");
-			}
-
 		}
 		else
 		{
@@ -1229,24 +1230,26 @@ void Game::RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numAct
 			break;
 			case PxGeometryType::eCONVEXMESH:
 			{
-				//I don't want to render anything that belongs to the car rigidActor
-				//This way I render all PhysX elements except the car here and can use
-				//the RenderPhysXCar function instead for the car render
-				if (actors[actorIndex] != m_carController->GetVehicle()->getRigidDynamicActor())
+				if (ui_enableConvexHullRenders)
 				{
-					color = GetColorForGeometry(type, sleeping);
-					AddMeshForConvexMesh(cvxMesh, *actors[actorIndex], *shapes[shapeIndex], color);
-				}
-				else
-				{
-					//Hey I asked for the debug render of the car so draw it for me!
-					if (ui_enableCarDebug)
+					//I don't want to render anything that belongs to the car rigidActor
+					//This way I render all PhysX elements except the car here and can use
+					//the RenderPhysXCar function instead for the car render
+					if (actors[actorIndex] != m_carController->GetVehicle()->getRigidDynamicActor())
 					{
 						color = GetColorForGeometry(type, sleeping);
 						AddMeshForConvexMesh(cvxMesh, *actors[actorIndex], *shapes[shapeIndex], color);
 					}
+					else
+					{
+						//Hey I asked for the debug render of the car so draw it for me!
+						if (ui_enableCarDebug)
+						{
+							color = GetColorForGeometry(type, sleeping);
+							AddMeshForConvexMesh(cvxMesh, *actors[actorIndex], *shapes[shapeIndex], color);
+						}
+					}
 				}
-
 			}
 			break;
 			case PxGeometryType::eCAPSULE:
@@ -1659,6 +1662,8 @@ void Game::Update( float deltaTime )
 
 	m_racetrackTransform = Matrix44::SetTranslation3D(m_racetrackTranslation, m_racetrackTransform);
 
+	m_trackTestTransform = Matrix44::SetTranslation3D(m_trackTestTranslation, m_trackTestTransform);
+
 	UpdateImGUI();
 	UpdatePhysXCar(deltaTime);
 	UpdateCarCamera(deltaTime);
@@ -1775,6 +1780,7 @@ void Game::UpdateImGUIDebugWidget()
 	ImGui::Checkbox("Enable Debug Camera", &ui_swapToMainCamera);
 	ImGui::DragFloat3("Track Translation", ui_racetrackTranslation);
 
+	ImGui::Checkbox("Enable Convex Hull Debug", &ui_enableConvexHullRenders);
 	ImGui::Checkbox("Enable Car Debug", &ui_enableCarDebug);
 
 	//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -1922,7 +1928,11 @@ void Game::CreateInitialMeshes()
 	m_wheelModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelMeshPath);
 	m_wheelFlippedModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelFlippedMeshPath);
 
-	m_trackPieceModel = g_renderContext->CreateOrGetMeshFromFile(m_trackAngledPath);
+	//m_trackPieceModel = g_renderContext->CreateOrGetMeshFromFile(m_trackAngledPath);
+	//m_trackJumpPiece = g_renderContext->CreateOrGetMeshFromFile(m_trackJumpPath);
+
+	m_trackTestModel = g_renderContext->CreateOrGetMeshFromFile(m_trackTestPath);
+	m_trackCollidersTestModel = g_renderContext->CreateOrGetMeshFromFile(m_trackCollisionsTestPath);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

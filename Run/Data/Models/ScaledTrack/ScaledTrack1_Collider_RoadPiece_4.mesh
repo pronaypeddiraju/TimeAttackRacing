@@ -1,0 +1,11 @@
+<mesh id="PhysX/ScaledTrack1_Collider_RoadPiece_4"
+	src="ScaledTrack/ScaledTrack1_Collider_RoadPiece_4.obj"
+	invert="false"
+	tangents="true"
+	scale = "1.f"
+	transform="x y -z"
+	position = "0.f, 0.f, 0.f">
+
+	<material index="0" src="ScaledTrack/defaultTrack.mat" />
+
+</mesh >
