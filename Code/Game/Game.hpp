@@ -67,8 +67,10 @@ public:
 	void								CreateObstacleWall(const int numHorizontalBoxes, const int numVerticalBoxes, const float boxSize, const PxVec3& pos, const PxQuat& quat);
 	void								CreatePhysXVehicleRamp();
 	void								CreatePhysXVehicleObstacles();
+	
 	//void								CreatePhysXArticulationChain();
 	//void								CreatePhysXChains(const Vec3& position, int length, const PxGeometry& geometry, float separation);
+	
 	void								CreatePhysXConvexHull();
 	void								CreatePhysXStack(const Vec3& position, uint size, float halfExtent);
 
@@ -123,6 +125,7 @@ private:
 
 	CarController*						m_carController = nullptr;
 
+	float								m_anotherTestTempHackStackZ = 20.f;	//20 is good I guess?
 public:
 	
 	TextureView*						m_textureTest = nullptr;

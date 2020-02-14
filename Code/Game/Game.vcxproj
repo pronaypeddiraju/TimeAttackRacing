@@ -204,6 +204,7 @@
       <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ShowIncludes>
     </ClCompile>
     <ClCompile Include="PhysXGame.cpp" />
+    <ClCompile Include="Waypoint.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp" />
@@ -214,6 +215,7 @@
     <ClInclude Include="Game.hpp" />
     <ClInclude Include="GameCommon.hpp" />
     <ClInclude Include="PhysXGame.hpp" />
+    <ClInclude Include="Waypoint.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Submodule\Engine\Code\Engine\Engine.vcxproj">

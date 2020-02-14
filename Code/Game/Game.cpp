@@ -86,7 +86,7 @@ void Game::StartUp()
 	options.space = DEBUG_RENDER_SCREEN;
 
 	m_carController = new CarController();
-	SetupPhysX();	
+	//SetupPhysX();	
 
 	CreateInitialMeshes();
 
@@ -307,32 +307,30 @@ void Game::SetStartupDebugRenderObjects()
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::SetupPhysX()
 {
-	/*
-	PxPhysics* physX = g_PxPhysXSystem->GetPhysXSDK();
-	PxScene* pxScene = g_PxPhysXSystem->GetPhysXScene();
-
-	PxMaterial* pxMat;
-	pxMat = g_PxPhysXSystem->GetDefaultPxMaterial();
-
-	//Add things to your scene
-	PxRigidStatic* groundPlane = PxCreatePlane(*physX, PxPlane(0, 1, 0, 0), *pxMat);
-	pxScene->addActor(*groundPlane);
-
-	for (int setIndex = 0; setIndex < 5; setIndex++)
-	{
-		CreatePhysXStack(Vec3(0, 0, m_anotherTestTempHackStackZ -= 10.f), 10, 2.f);
-	}
-
-	CreatePhysXConvexHull();
-	CreatePhysXChains(m_chainPosition, m_chainLength, PxBoxGeometry(2.0f, 0.5f, 0.5f), m_chainSeperation);
-	CreatePhysXArticulationChain();
-	*/
+// 	PxPhysics* physX = g_PxPhysXSystem->GetPhysXSDK();
+// 	PxScene* pxScene = g_PxPhysXSystem->GetPhysXScene();
+// 
+// 	PxMaterial* pxMat;
+// 	pxMat = g_PxPhysXSystem->GetDefaultPxMaterial();
+// 
+// 	//Add things to your scene
+// 	PxRigidStatic* groundPlane = PxCreatePlane(*physX, PxPlane(0, 1, 0, 0), *pxMat);
+// 	pxScene->addActor(*groundPlane);
+// 
+// 	for (int setIndex = 0; setIndex < 5; setIndex++)
+// 	{
+// 		CreatePhysXStack(Vec3(0, 0, m_anotherTestTempHackStackZ -= 10.f), 10, 2.f);
+// 	}
+// 
+// 	CreatePhysXConvexHull();
+//	CreatePhysXChains(m_chainPosition, m_chainLength, PxBoxGeometry(2.0f, 0.5f, 0.5f), m_chainSeperation);
+//	CreatePhysXArticulationChain();
 
 	//Vehicle SDK only
-	//CreatePhysXVehicleObstacles();
-	//CreatePhysXVehicleBoxWall();
-	
+	CreatePhysXVehicleObstacles();
+	CreatePhysXVehicleBoxWall();
 	CreatePhysXVehicleRamp();
+	
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -393,7 +391,7 @@ void Game::CreatePhysXVehicleRamp()
 	PxCooking* pxCooking = g_PxPhysXSystem->GetPhysXCookingModule();
 	PxMaterial* pxMaterial = g_PxPhysXSystem->GetDefaultPxMaterial();
 
-	//Add a really big ramp to jump over the car stack.
+	//Add a really big ramp to jump over 
 	{
 		PxVec3 halfExtentsRamp(5.0f, 1.9f, 7.0f);
 		PxConvexMeshGeometry geomRamp(g_PxPhysXSystem->CreateWedgeConvexMesh(halfExtentsRamp, *physX, *pxCooking));
@@ -410,7 +408,7 @@ void Game::CreatePhysXVehicleRamp()
 		g_PxPhysXSystem->AddStaticObstacle(tRamp, 1, shapeTransforms, shapeGeometries, shapeMaterials);
 	}
 
-	//Add two ramps side by side with a gap in between
+	//Add two ramps side by side somewhere
 	{
 		PxVec3 halfExtents(3.0f, 1.5f, 3.5f);
 		PxConvexMeshGeometry geometry(g_PxPhysXSystem->CreateWedgeConvexMesh(halfExtents, *physX, *pxCooking));
@@ -1048,10 +1046,14 @@ void Game::RenderRacetrack() const
 // 	g_renderContext->SetModelMatrix(m_jumpPieceTransform);
 // 	g_renderContext->DrawMesh(m_trackJumpPiece);
 
+	//g_renderContext->BindMaterial(g_renderContext->CreateOrGetMaterialFromFile(m_trackTestModel->GetDefaultMaterialName()));
 	g_renderContext->BindMaterial(m_couchMaterial);
-	g_renderContext->BindTextureViewWithSampler(0U, nullptr);
 	g_renderContext->SetModelMatrix(m_trackTestTransform);
 	g_renderContext->DrawMesh(m_trackTestModel);
+
+	g_renderContext->BindMaterial( m_defaultMaterial);
+	g_renderContext->SetModelMatrix(m_trackTestTransform);
+	g_renderContext->DrawMesh(m_trackCollidersTestModel);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1240,14 +1242,15 @@ void Game::RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numAct
 						color = GetColorForGeometry(type, sleeping);
 						AddMeshForConvexMesh(cvxMesh, *actors[actorIndex], *shapes[shapeIndex], color);
 					}
-					else
+				}
+
+				if (ui_enableCarDebug)
+				{
+					//We want to debug render the car here instead of above 
+					if (actors[actorIndex] == m_carController->GetVehicle()->getRigidDynamicActor())
 					{
-						//Hey I asked for the debug render of the car so draw it for me!
-						if (ui_enableCarDebug)
-						{
-							color = GetColorForGeometry(type, sleeping);
-							AddMeshForConvexMesh(cvxMesh, *actors[actorIndex], *shapes[shapeIndex], color);
-						}
+						color = GetColorForGeometry(type, sleeping);
+						AddMeshForConvexMesh(cvxMesh, *actors[actorIndex], *shapes[shapeIndex], color);
 					}
 				}
 			}
@@ -1863,7 +1866,7 @@ void Game::UpdateLightPositions()
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::CreateInitialLight()
 {
-	m_directionalLightPos = Vec3(-1.f, -1.f, -1.f).GetNormalized();
+	m_directionalLightPos = Vec3(1.f, 1.f, 1.f).GetNormalized();
 	g_renderContext->EnableDirectionalLight(Vec3(1.f, 1.f, 1.f), m_directionalLightPos);
 
 // 	g_renderContext->EnablePointLight(1U, m_dynamicLight0Pos, Vec3(1.f, 0.f, 0.5f),Rgba::GREEN);

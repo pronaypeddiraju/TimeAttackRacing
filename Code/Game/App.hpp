@@ -19,6 +19,7 @@ public:
 	void LoadGameBlackBoard();
 	void StartUp();
 	void ShutDown();
+	void RestartAllSystems();
 	void RunFrame();
 
 	bool IsQuitting() const { return m_isQuitting; }

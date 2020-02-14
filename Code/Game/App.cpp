@@ -144,6 +144,45 @@ void App::ShutDown()
 	m_game->Shutdown();
 }
 
+void App::RestartAllSystems()
+{
+	delete g_ImGUI;
+	g_ImGUI = nullptr;
+
+	delete g_audio;
+	g_audio = nullptr;
+
+	g_PxPhysXSystem->RestartPhysX();
+	
+	delete g_debugRenderer;
+	g_debugRenderer = nullptr;
+
+	delete g_RNG;
+	g_RNG = nullptr;
+
+	m_game->Shutdown();
+
+	g_renderContext->Restart();
+
+	//This is now being set in Main_Windows.cpp
+	//g_renderContext = new RenderContext(m_appWindowHandle);
+
+	g_audio = new AudioSystem();
+
+	//create the networking system
+	//g_networkSystem = new NetworkSystem();
+
+	g_debugRenderer = new DebugRender();
+	g_debugRenderer->Startup(g_renderContext);
+
+	g_ImGUI = new ImGUISystem(g_renderContext);
+
+	g_RNG = new RandomNumberGenerator(0);
+
+	m_game = new Game();
+	m_game->StartUp();
+}
+
 void App::RunFrame()
 {
 	BeginFrame();	
@@ -262,10 +301,8 @@ bool App::HandleKeyPressed(unsigned char keyCode)
 		case F8_KEY:
 		{
 			//Kill and restart the app
-			delete m_game;
-			m_game = nullptr;
-			m_game = new Game();
-			m_game->StartUp();
+			RestartAllSystems();
+
 			return true;
 		}
 		case KEY_ESC:

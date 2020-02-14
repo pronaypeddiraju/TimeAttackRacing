@@ -1,8 +1,8 @@
 <material id="PhysX/trackMat"
   shader="default_lit.xml">
 
-  <diffuse  src="" />
-  <normal   src="" />
+  <diffuse  src="GREY.png" />
+  <normal   src="GREY.png" />
 
   <sampler idx="0" type="linear" />
 
