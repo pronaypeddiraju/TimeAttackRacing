@@ -204,7 +204,9 @@
       <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ShowIncludes>
     </ClCompile>
     <ClCompile Include="PhysXGame.cpp" />
-    <ClCompile Include="Waypoint.cpp" />
+    <ClCompile Include="WaypointRegionBased.cpp" />
+    <ClCompile Include="WaypointSystem.cpp" />
+    <ClCompile Include="WaypointTriggerBased.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp" />
@@ -215,7 +217,9 @@
     <ClInclude Include="Game.hpp" />
     <ClInclude Include="GameCommon.hpp" />
     <ClInclude Include="PhysXGame.hpp" />
-    <ClInclude Include="Waypoint.hpp" />
+    <ClInclude Include="WaypointRegionBased.hpp" />
+    <ClInclude Include="WaypointTriggerBased.hpp" />
+    <ClInclude Include="WaypointSystem.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Submodule\Engine\Code\Engine\Engine.vcxproj">

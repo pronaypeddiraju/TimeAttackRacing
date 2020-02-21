@@ -92,6 +92,8 @@ void Game::StartUp()
 
 	Vec3 camEuler = Vec3(-12.5f, -196.f, 0.f);
 	m_mainCamera->SetEuler(camEuler);
+
+	CreateWayPoints();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -330,7 +332,6 @@ void Game::SetupPhysX()
 	CreatePhysXVehicleObstacles();
 	CreatePhysXVehicleBoxWall();
 	CreatePhysXVehicleRamp();
-	
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -464,6 +465,12 @@ void Game::CreatePhysXVehicleObstacles()
 
 		pxScene->addActor(*rd);
 	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+physx::PxRigidActor* Game::GetCarActor() const
+{
+	return m_carController->GetVehicle()->getRigidDynamicActor();
 }
 
 /*
@@ -1011,6 +1018,15 @@ void Game::Render() const
 	RenderPhysXScene();
 	RenderRacetrack();
 
+	if (m_debugRenderWaypoints)
+	{
+		DebugRenderWaypointSystem();
+	}
+	else
+	{
+		RenderWaypointSystem();
+	}
+
 	g_renderContext->EndCamera();	
 
 	if(!m_consoleDebugOnce)
@@ -1046,8 +1062,7 @@ void Game::RenderRacetrack() const
 // 	g_renderContext->SetModelMatrix(m_jumpPieceTransform);
 // 	g_renderContext->DrawMesh(m_trackJumpPiece);
 
-	//g_renderContext->BindMaterial(g_renderContext->CreateOrGetMaterialFromFile(m_trackTestModel->GetDefaultMaterialName()));
-	g_renderContext->BindMaterial(m_couchMaterial);
+	g_renderContext->BindMaterial(g_renderContext->CreateOrGetMaterialFromFile(m_trackTestModel->GetDefaultMaterialName()));
 	g_renderContext->SetModelMatrix(m_trackTestTransform);
 	g_renderContext->DrawMesh(m_trackTestModel);
 
@@ -1296,6 +1311,18 @@ void Game::RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numAct
 		m_pxCapMesh->CreateFromCPUMesh<Vertex_Lit>(&capMesh, GPU_MEMORY_USAGE_STATIC);
 		g_renderContext->DrawMesh(m_pxCapMesh);
 	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::DebugRenderWaypointSystem() const
+{
+	m_waypointSystem.DebugRenderWaypoints();
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::RenderWaypointSystem() const
+{
+	m_waypointSystem.RenderNextWaypoint();
 }
 
 /*
@@ -1638,7 +1665,10 @@ void Game::PostRender()
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::Update( float deltaTime )
 {
-	UpdateMouseInputs(deltaTime);
+
+	float clampedDT = ClampZeroToOne(deltaTime);
+
+	UpdateMouseInputs(clampedDT);
 	
 	//g_ImGUI->BeginFrame();
 
@@ -1650,7 +1680,7 @@ void Game::Update( float deltaTime )
 
 	g_renderContext->m_frameCount++;
 
-	m_animTime += deltaTime;
+	m_animTime += clampedDT;
 	float currentTime = static_cast<float>(GetCurrentTimeSeconds());
 
 	//Update the camera's transform
@@ -1668,8 +1698,12 @@ void Game::Update( float deltaTime )
 	m_trackTestTransform = Matrix44::SetTranslation3D(m_trackTestTranslation, m_trackTestTransform);
 
 	UpdateImGUI();
-	UpdatePhysXCar(deltaTime);
-	UpdateCarCamera(deltaTime);
+	UpdatePhysXCar(clampedDT);
+	UpdateCarCamera(clampedDT);
+	m_waypointSystem.Update(m_carController->GetVehiclePosition());
+
+	//We need to call update on the WaypointSystem
+	//m_wayPointRegionBased.HasPointCrossedWaypoint(m_carController->GetVehiclePosition());
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1805,6 +1839,27 @@ bool Game::IsAlive()
 {
 	//Check if alive
 	return m_isGameAlive;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+// void Game::RenderRegionBasedWaypoint() const
+// {
+// 	//NOTE: This code is only to test if the waypoint ssytem works
+// 	CPUMesh boxMesh;	
+// 	CPUMeshAddCube(&boxMesh, AABB3(m_wayPointRegionBased.GetWaypointMins(), m_wayPointRegionBased.GetWaypointMaxs()), Rgba::GREEN);
+// 	GPUMesh mesh = GPUMesh(g_renderContext);
+// 	mesh.CreateFromCPUMesh<Vertex_Lit>(&boxMesh, GPU_MEMORY_USAGE_STATIC);
+// 	g_renderContext->DrawMesh(&mesh);
+// }
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::CreateWayPoints()
+{
+	TODO("This initializes the waypoints in the system");
+
+	m_waypointSystem.AddNewWayPoint(m_wayPointPosition, m_wayPointHalfExtents, 0);
+	m_waypointSystem.AddNewWayPoint(Vec3(15.f, 0.f, 50.f), m_wayPointHalfExtents, 1);
+	m_waypointSystem.AddNewWayPoint(Vec3(15.f, 0.f, 100.f), m_wayPointHalfExtents, 2);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

@@ -11,6 +11,9 @@
 #include "Game/CarCamera.hpp"
 #include "Game/CarController.hpp"
 #include "Game/GameCommon.hpp"
+#include "Game/WaypointTriggerBased.hpp"
+#include "Game/WaypointRegionBased.hpp"
+#include "Game/WaypointSystem.hpp"
 //Third Party
 #include "extensions/PxDefaultAllocator.h"
 #include "extensions/PxDefaultCpuDispatcher.h"
@@ -68,11 +71,14 @@ public:
 	void								CreatePhysXVehicleRamp();
 	void								CreatePhysXVehicleObstacles();
 	
+	PxRigidActor*						GetCarActor() const;
+
 	//void								CreatePhysXArticulationChain();
 	//void								CreatePhysXChains(const Vec3& position, int length, const PxGeometry& geometry, float separation);
 	
 	void								CreatePhysXConvexHull();
 	void								CreatePhysXStack(const Vec3& position, uint size, float halfExtent);
+	void								CreateWayPoints();
 
 	void								HandleKeyPressed(unsigned char keyCode);
 	void								HandleKeyReleased( unsigned char keyCode );
@@ -90,6 +96,11 @@ public:
 	void								RenderPhysXScene() const;
 	void								RenderPhysXCar() const;
 	void								RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numActors, Rgba& color) const;
+	
+	void								DebugRenderWaypointSystem() const;
+	void								RenderWaypointSystem() const;
+
+	//void								RenderRegionBasedWaypoint() const;
 	
 	//For now let's say this is no longer necessary 
 	//void								RenderPhysXShapesForVehicle(const std::vector<PxShape*> shapes, int numShapes, Rgba& color) const;
@@ -212,7 +223,7 @@ public:
 
 	GPUMesh*							m_trackTestModel = nullptr;
 	GPUMesh*							m_trackCollidersTestModel = nullptr;
-	Vec3								m_trackTestTranslation = Vec3(0.f, 0.f, 0.f);
+	Vec3								m_trackTestTranslation = Vec3(0.f, -0.1f, 0.f);
 	Matrix44							m_trackTestTransform;
 	
 	//------------------------------------------------------------------------------------------------------------------------------
@@ -273,9 +284,21 @@ public:
 
 	bool								m_debugViewCarCollider = false;
 
+	//WaypointTriggerBased				m_wayPointTest;
+	Vec3								m_wayPointPosition = Vec3(15.f, 0.f, 10.f);
+	Vec3								m_wayPointHalfExtents = Vec3(5.f, 5.f, 1.f);
+	WaypointRegionBased					m_wayPointRegionBased;
+
 	//------------------------------------------------------------------------------------------------------------------------------
 	//Car Camera and other game data
 	//------------------------------------------------------------------------------------------------------------------------------
 	CarCamera*							m_carCamera = nullptr;
 	float								m_frameZoomDelta = 0.f;
+
+	//------------------------------------------------------------------------------------------------------------------------------
+	// Waypoint System
+	//------------------------------------------------------------------------------------------------------------------------------
+	WaypointSystem						m_waypointSystem;
+	bool								m_debugRenderWaypoints = false;
+
 };

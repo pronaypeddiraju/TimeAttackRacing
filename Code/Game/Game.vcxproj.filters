@@ -31,7 +31,13 @@
     <ClCompile Include="CarCamera.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
-    <ClCompile Include="Waypoint.cpp">
+    <ClCompile Include="WaypointTriggerBased.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="WaypointRegionBased.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="WaypointSystem.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
   </ItemGroup>
@@ -56,6 +62,8 @@
     </ClInclude>
     <ClInclude Include="CarController.hpp" />
     <ClInclude Include="CarCamera.hpp" />
-    <ClInclude Include="Waypoint.hpp" />
+    <ClInclude Include="WaypointSystem.hpp" />
+    <ClInclude Include="WaypointTriggerBased.hpp" />
+    <ClInclude Include="WaypointRegionBased.hpp" />
   </ItemGroup>
 </Project>
