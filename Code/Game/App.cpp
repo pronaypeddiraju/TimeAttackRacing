@@ -4,6 +4,7 @@
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Commons/EngineCommon.hpp"
 #include "Engine/Commons/Profiler/Profiler.hpp"
+#include "Engine/Commons/Profiler/ProfilerReport.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EventSystems.hpp"
 #include "Engine/Core/NamedStrings.hpp"
@@ -96,6 +97,9 @@ void App::StartUp()
 	}
 #endif
 
+	gProfiler->ProfilerInitialize();
+	gProfiler->ProfilerSetMaxHistoryTime(3);
+
 	m_game = new Game();
 	m_game->StartUp();
 	
@@ -140,6 +144,8 @@ void App::ShutDown()
 		gProfiler->ProfilerShutdown();
 	}
 #endif
+	
+	gProfiler->ProfilerShutdown();
 
 	m_game->Shutdown();
 }
@@ -187,8 +193,8 @@ void App::RunFrame()
 {
 	BeginFrame();	
 	
-	Update();
 	Render();	
+	Update();
 
 	PostRender();
 
@@ -197,6 +203,7 @@ void App::RunFrame()
 
 void App::BeginFrame()
 {
+	gProfiler->ProfilerEndFrame();
 	gProfiler->ProfilerBeginFrame("App::BeginFrame");
 
 	g_renderContext->BeginFrame();
@@ -220,7 +227,7 @@ void App::EndFrame()
 	g_ImGUI->EndFrame();
 	g_PxPhysXSystem->EndFrame();
 
-	gProfiler->ProfilerEndFrame();
+	
 }
 
 void App::Update()
@@ -230,29 +237,40 @@ void App::Update()
 	m_timeAtLastFrameBegin = m_timeAtThisFrameBegin;
 	m_timeAtThisFrameBegin = GetCurrentTimeSeconds();
 
-	DebugRenderOptionsT options;
-	const char* text = "Current Time %f";
+	m_timeCacheForFrame += m_timeAtThisFrameBegin - m_timeAtLastFrameBegin;
 
+	while (m_timeCacheForFrame > m_fixedTimeStepForUpdate)
+	{
+		g_devConsole->UpdateConsole(m_fixedTimeStepForUpdate);
+		g_PxPhysXSystem->Update(m_fixedTimeStepForUpdate);
+		m_game->FixedUpdate(m_fixedTimeStepForUpdate);
+
+		m_timeCacheForFrame -= m_fixedTimeStepForUpdate;
+	}
+
+	//DebugRenderOptionsT options;
 	//g_debugRenderer->DebugAddToLog(options, text, Rgba::YELLOW, 0.f, m_timeAtThisFrameBegin);
 
 	float deltaTime = static_cast<float>(m_timeAtThisFrameBegin - m_timeAtLastFrameBegin);
-	deltaTime = Clamp(deltaTime, 0.0f, 0.1f);
 
-	//DEBUG
-	//deltaTime = 1.f / 60.f;
-
-	//text = "Frame Rate %f";
-	//g_debugRenderer->DebugAddToLog(options, text, Rgba::WHITE, 0.f, (1.f / deltaTime));
-
-	//text = "Delta Time %f";
-	//g_debugRenderer->DebugAddToLog(options, text, Rgba::WHITE, 0.f, deltaTime);
-
-	g_devConsole->UpdateConsole(deltaTime);
-	g_PxPhysXSystem->Update(deltaTime);
+	int timeInMS = (int)(deltaTime * 1000.f);
+	if (timeInMS < 16)
+	{
+//		g_devConsole->PrintString(Rgba::GREEN, Stringf("Delta Time: %d", timeInMS));
+	}
+	else
+	{
+		g_devConsole->PrintString(Rgba::RED, Stringf("Delta Time: %d", timeInMS));
+	}
+	deltaTime = ClampZeroToOne(deltaTime);
 
 	m_game->Update(deltaTime);
 
-	g_debugRenderer->Update(deltaTime);
+	//Logic before using cached time and fixed time step updates
+	//g_devConsole->UpdateConsole(deltaTime);
+	//g_PxPhysXSystem->Update(0.016666f);
+	//m_game->Update(deltaTime);
+	//g_debugRenderer->Update(deltaTime);
 }
 
 void App::Render() const

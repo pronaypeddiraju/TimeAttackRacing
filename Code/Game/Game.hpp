@@ -118,6 +118,7 @@ public:
 	void								PostRender();
 	
 	void								Update( float deltaTime );
+	void								FixedUpdate(float deltaTime);
 	void								UpdatePhysXCar( float deltaTime );
 	void								UpdateCarCamera(float deltaTime);
 	void								UpdateImGUI();

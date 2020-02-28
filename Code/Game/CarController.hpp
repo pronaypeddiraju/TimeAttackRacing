@@ -13,6 +13,7 @@ public:
 	bool	IsDigitalInputEnabled() const;
 
 	void	Update(float deltaTime);
+	void	FixedUpdate(float deltaTime);
 	void	UpdateInputs();
 	void	VehiclePhysicsUpdate(float deltaTime);
 

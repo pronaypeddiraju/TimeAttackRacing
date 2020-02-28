@@ -2,6 +2,7 @@
 #include "Game/Game.hpp"
 //Engine Systems
 #include "Engine/Audio/AudioSystem.hpp"
+#include "Engine/Commons/Profiler/Profiler.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EventSystems.hpp"
 #include "Engine/Core/NamedProperties.hpp"
@@ -86,7 +87,18 @@ void Game::StartUp()
 	options.space = DEBUG_RENDER_SCREEN;
 
 	m_carController = new CarController();
-	//SetupPhysX();	
+
+	PxPhysics* physX = g_PxPhysXSystem->GetPhysXSDK();
+	PxScene* pxScene = g_PxPhysXSystem->GetPhysXScene();
+
+	PxMaterial* pxMat;
+	pxMat = g_PxPhysXSystem->GetDefaultPxMaterial();
+
+	//Add things to your scene
+	PxRigidStatic* groundPlane = PxCreatePlane(*physX, PxPlane(0, 1, 0, -10), *pxMat);
+	pxScene->addActor(*groundPlane);
+
+	SetupPhysX();	
 
 	CreateInitialMeshes();
 
@@ -102,8 +114,8 @@ void Game::SetupMouseData()
 	//IntVec2 clientCenter = g_windowContext->GetClientCenter();
 	//g_windowContext->SetClientMousePosition(clientCenter);
 
-	g_windowContext->SetMouseMode(MOUSE_MODE_ABSOLUTE);
-	//g_windowContext->HideMouse();
+	g_windowContext->SetMouseMode(MOUSE_MODE_RELATIVE);
+	g_windowContext->HideMouse();
 }
 
 void Game::SetupCameras()
@@ -309,29 +321,29 @@ void Game::SetStartupDebugRenderObjects()
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::SetupPhysX()
 {
-// 	PxPhysics* physX = g_PxPhysXSystem->GetPhysXSDK();
-// 	PxScene* pxScene = g_PxPhysXSystem->GetPhysXScene();
-// 
-// 	PxMaterial* pxMat;
-// 	pxMat = g_PxPhysXSystem->GetDefaultPxMaterial();
-// 
-// 	//Add things to your scene
-// 	PxRigidStatic* groundPlane = PxCreatePlane(*physX, PxPlane(0, 1, 0, 0), *pxMat);
-// 	pxScene->addActor(*groundPlane);
-// 
+	PxPhysics* physX = g_PxPhysXSystem->GetPhysXSDK();
+	PxScene* pxScene = g_PxPhysXSystem->GetPhysXScene();
+
+	PxMaterial* pxMat;
+	pxMat = g_PxPhysXSystem->GetDefaultPxMaterial();
+
+	//Add things to your scene
+	PxRigidStatic* groundPlane = PxCreatePlane(*physX, PxPlane(0, 1, 0, 0), *pxMat);
+	pxScene->addActor(*groundPlane);
+
 // 	for (int setIndex = 0; setIndex < 5; setIndex++)
 // 	{
 // 		CreatePhysXStack(Vec3(0, 0, m_anotherTestTempHackStackZ -= 10.f), 10, 2.f);
 // 	}
-// 
-// 	CreatePhysXConvexHull();
-//	CreatePhysXChains(m_chainPosition, m_chainLength, PxBoxGeometry(2.0f, 0.5f, 0.5f), m_chainSeperation);
-//	CreatePhysXArticulationChain();
+
+	//CreatePhysXConvexHull();
+	//CreatePhysXChains(m_chainPosition, m_chainLength, PxBoxGeometry(2.0f, 0.5f, 0.5f), m_chainSeperation);
+	//CreatePhysXArticulationChain();
 
 	//Vehicle SDK only
-	CreatePhysXVehicleObstacles();
-	CreatePhysXVehicleBoxWall();
-	CreatePhysXVehicleRamp();
+	//CreatePhysXVehicleObstacles();
+	//CreatePhysXVehicleBoxWall();
+	//CreatePhysXVehicleRamp();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -964,6 +976,8 @@ bool Game::HandleMouseScroll(float wheelDelta)
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::Render() const
 {
+	gProfiler->ProfilerPush("Game Render");
+	
 	//Get the ColorTargetView from rendercontext
 	ColorTargetView *colorTargetView = g_renderContext->GetFrameColorTarget();
 
@@ -976,7 +990,7 @@ void Game::Render() const
 	Matrix44 camTransform = Matrix44::MakeFromEuler( m_mainCamera->GetEuler(), m_rotationOrder ); 
 	camTransform = Matrix44::SetTranslation3D(m_camPosition, camTransform);
 	m_mainCamera->SetModelMatrix(camTransform);
-
+	
 	if (ui_swapToMainCamera)
 	{
 		//For regular PhysX camera
@@ -1009,15 +1023,18 @@ void Game::Render() const
 	//RenderUsingMaterial();
 
 	//Render the Quad
-	g_renderContext->BindMaterial(m_defaultMaterial);
-	g_renderContext->BindTextureViewWithSampler(0U, nullptr);
-	g_renderContext->SetModelMatrix(m_baseQuadTransform);
-	g_renderContext->DrawMesh(m_baseQuad);
+	//g_renderContext->BindMaterial(m_defaultMaterial);
+	//g_renderContext->BindTextureViewWithSampler(0U, nullptr);
+	//g_renderContext->SetModelMatrix(m_baseQuadTransform);
+	//g_renderContext->DrawMesh(m_baseQuad);
 
-
-	RenderPhysXScene();
+	//Only for Vehicle SDK
+	RenderPhysXCar();
+	
+	//RenderPhysXScene();
 	RenderRacetrack();
 
+	/*
 	if (m_debugRenderWaypoints)
 	{
 		DebugRenderWaypointSystem();
@@ -1026,28 +1043,21 @@ void Game::Render() const
 	{
 		RenderWaypointSystem();
 	}
+	*/
 
 	g_renderContext->EndCamera();	
 
-	if(!m_consoleDebugOnce)
+	//Uncomment to get Debug Rendering to work
+	//DebugRenderToCamera();
+
+	g_renderContext->BindShader(m_shader);
+	
+	if (g_devConsole->IsOpen())
 	{
-		EventArgs* args = new EventArgs();
-		std::string key = "TestString";
-		std::string value = "This is a test";
-		args->SetValue(key, value);
-		g_devConsole->Command_Test(*args);
-		g_devConsole->ExecuteCommandLine("Exec Health=25");
-		g_devConsole->ExecuteCommandLine("Exec Health=85 Armor=100");
+		g_devConsole->Render(*g_renderContext, *m_devConsoleCamera, DEVCONSOLE_LINE_HEIGHT);
 	}
 
-	//Uncomment to get Debug Rendering to work
-	DebugRenderToCamera();
-
-	if(g_devConsole->IsOpen())
-	{	
-		g_devConsole->Render(*g_renderContext, *m_devConsoleCamera, DEVCONSOLE_LINE_HEIGHT);
-	}	
-
+	gProfiler->ProfilerPop();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1132,9 +1142,6 @@ void Game::RenderPhysXScene() const
 		Rgba color = Rgba(1.f, 1.f, 1.f, 1.f);
 		RenderPhysXActors(actors, (int)actors.size(), color);
 	}
-
-	//Only for Vehicle SDK
-	RenderPhysXCar();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1639,6 +1646,8 @@ void Game::DebugRenderToCamera() const
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::PostRender()
 {
+	gProfiler->ProfilerPush("Game::PostRender");
+
 	//Debug bools
 	m_consoleDebugOnce = true;
 
@@ -1660,15 +1669,16 @@ void Game::PostRender()
 	DebugRenderToScreen();
 
 	g_ImGUI->Render();
+
+	gProfiler->ProfilerPop();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::Update( float deltaTime )
 {
+	gProfiler->ProfilerPush("Game Update");
 
-	float clampedDT = ClampZeroToOne(deltaTime);
-
-	UpdateMouseInputs(clampedDT);
+	UpdateMouseInputs(deltaTime);
 	
 	//g_ImGUI->BeginFrame();
 
@@ -1680,7 +1690,7 @@ void Game::Update( float deltaTime )
 
 	g_renderContext->m_frameCount++;
 
-	m_animTime += clampedDT;
+	m_animTime += deltaTime;
 	float currentTime = static_cast<float>(GetCurrentTimeSeconds());
 
 	//Update the camera's transform
@@ -1697,19 +1707,27 @@ void Game::Update( float deltaTime )
 
 	m_trackTestTransform = Matrix44::SetTranslation3D(m_trackTestTranslation, m_trackTestTransform);
 
-	UpdateImGUI();
-	UpdatePhysXCar(clampedDT);
-	UpdateCarCamera(clampedDT);
+	//UpdateImGUI();
+	m_carController->Update(deltaTime);
 	m_waypointSystem.Update(m_carController->GetVehiclePosition());
 
 	//We need to call update on the WaypointSystem
 	//m_wayPointRegionBased.HasPointCrossedWaypoint(m_carController->GetVehiclePosition());
+
+	gProfiler->ProfilerPop();
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::FixedUpdate(float deltaTime)
+{
+	UpdateCarCamera(deltaTime);
+	UpdatePhysXCar(deltaTime);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::UpdatePhysXCar(float deltaTime)
 {
-	m_carController->Update(deltaTime);
+	m_carController->FixedUpdate(deltaTime);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1856,7 +1874,7 @@ bool Game::IsAlive()
 void Game::CreateWayPoints()
 {
 	TODO("This initializes the waypoints in the system");
-
+	m_waypointSystem.Startup();
 	m_waypointSystem.AddNewWayPoint(m_wayPointPosition, m_wayPointHalfExtents, 0);
 	m_waypointSystem.AddNewWayPoint(Vec3(15.f, 0.f, 50.f), m_wayPointHalfExtents, 1);
 	m_waypointSystem.AddNewWayPoint(Vec3(15.f, 0.f, 100.f), m_wayPointHalfExtents, 2);

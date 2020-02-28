@@ -53,4 +53,6 @@ private:
 	double		m_timeAtLastFrameBegin = 0;
 	double		m_timeAtThisFrameBegin = 0;
 
+	double		m_timeCacheForFrame = 0;
+	double		m_fixedTimeStepForUpdate = 0.01;	//Making the fixed time step really small guarantees at least 1 update per frame
 };

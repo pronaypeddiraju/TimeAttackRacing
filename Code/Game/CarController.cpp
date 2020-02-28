@@ -55,9 +55,13 @@ bool CarController::IsDigitalInputEnabled() const
 //------------------------------------------------------------------------------------------------------------------------------
 void CarController::Update(float deltaTime)
 {
-	VehiclePhysicsUpdate(deltaTime);
-
 	UpdateInputs();
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void CarController::FixedUpdate(float deltaTime)
+{
+	VehiclePhysicsUpdate(deltaTime);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

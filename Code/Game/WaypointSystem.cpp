@@ -175,21 +175,28 @@ void WaypointSystem::SetSystemToNextWaypoint()
 //------------------------------------------------------------------------------------------------------------------------------
 void WaypointSystem::AddTimeStampForLap()
 {
-	m_timeStamps.push_back(m_startTime - GetAccumulatedLapTimes());
+	m_timeStamps.push_back(GetAccumulatedLapTimes());
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
 double WaypointSystem::GetAccumulatedLapTimes() const
 {
 	std::vector<double>::const_iterator timeItr = m_timeStamps.begin();
-	double accumulatedTime = 0.0;
-
-	while (timeItr != m_timeStamps.end())
+	if (timeItr == m_timeStamps.end())
 	{
-		accumulatedTime += *timeItr;
-
-		timeItr++;
+		return GetCurrentTimeSeconds() - m_startTime;
 	}
+	else
+	{
+		double accumulatedTime = 0.0;
 
-	return accumulatedTime;
+		while (timeItr != m_timeStamps.end())
+		{
+			accumulatedTime += *timeItr;
+
+			timeItr++;
+		}
+
+		return GetCurrentTimeSeconds() - m_startTime + accumulatedTime;
+	}
 }
