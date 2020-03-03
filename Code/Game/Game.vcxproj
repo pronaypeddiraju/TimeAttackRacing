@@ -204,6 +204,7 @@
       <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ShowIncludes>
     </ClCompile>
     <ClCompile Include="PhysXGame.cpp" />
+    <ClCompile Include="SplitScreenSystem.cpp" />
     <ClCompile Include="WaypointRegionBased.cpp" />
     <ClCompile Include="WaypointSystem.cpp" />
     <ClCompile Include="WaypointTriggerBased.cpp" />
@@ -217,6 +218,7 @@
     <ClInclude Include="Game.hpp" />
     <ClInclude Include="GameCommon.hpp" />
     <ClInclude Include="PhysXGame.hpp" />
+    <ClInclude Include="SplitScreenSystem.hpp" />
     <ClInclude Include="WaypointRegionBased.hpp" />
     <ClInclude Include="WaypointTriggerBased.hpp" />
     <ClInclude Include="WaypointSystem.hpp" />

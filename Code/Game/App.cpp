@@ -203,7 +203,6 @@ void App::RunFrame()
 
 void App::BeginFrame()
 {
-	gProfiler->ProfilerEndFrame();
 	gProfiler->ProfilerBeginFrame("App::BeginFrame");
 
 	g_renderContext->BeginFrame();
@@ -227,7 +226,7 @@ void App::EndFrame()
 	g_ImGUI->EndFrame();
 	g_PxPhysXSystem->EndFrame();
 
-	
+	gProfiler->ProfilerEndFrame();
 }
 
 void App::Update()
@@ -256,7 +255,7 @@ void App::Update()
 	int timeInMS = (int)(deltaTime * 1000.f);
 	if (timeInMS < 16)
 	{
-//		g_devConsole->PrintString(Rgba::GREEN, Stringf("Delta Time: %d", timeInMS));
+		//g_devConsole->PrintString(Rgba::GREEN, Stringf("Delta Time: %d", timeInMS));
 	}
 	else
 	{
@@ -265,12 +264,6 @@ void App::Update()
 	deltaTime = ClampZeroToOne(deltaTime);
 
 	m_game->Update(deltaTime);
-
-	//Logic before using cached time and fixed time step updates
-	//g_devConsole->UpdateConsole(deltaTime);
-	//g_PxPhysXSystem->Update(0.016666f);
-	//m_game->Update(deltaTime);
-	//g_debugRenderer->Update(deltaTime);
 }
 
 void App::Render() const
@@ -338,8 +331,8 @@ bool App::HandleKeyPressed(unsigned char keyCode)
 			}
 		}
 		default:
-			//Nothing to worry about
-			return false;
+			m_game->HandleKeyPressed(keyCode);
+			return true;
 		break;
 	}
 }

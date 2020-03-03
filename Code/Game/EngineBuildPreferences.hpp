@@ -13,8 +13,6 @@
 #define MEM_TRACK_ALLOC_COUNT 	0
 #define MEM_TRACK_VERBOSE		1
 
-#define PROFILING_ENABLED
-
 #if defined(_DEBUG)
 #define MEM_TRACKING MEM_TRACK_VERBOSE
 #elif defined(_RELEASE)
@@ -24,5 +22,4 @@
 #if defined(_DEBUG)
 #define PROFILING_ENABLED
 #elif defined(_RELEASE)
-#define PROFILING_ENABLED
 #endif

@@ -94,7 +94,7 @@ public:
 	void								RenderUsingMaterial() const;
 	
 	void								RenderPhysXScene() const;
-	void								RenderPhysXCar() const;
+	void								RenderPhysXCar(const CarController& carController) const;
 	void								RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numActors, Rgba& color) const;
 	
 	void								DebugRenderWaypointSystem() const;
@@ -136,6 +136,7 @@ private:
 	float								m_cameraSpeed = 0.3f; 
 
 	CarController*						m_carController = nullptr;
+	CarController*						m_player2CarController = nullptr;
 
 	float								m_anotherTestTempHackStackZ = 20.f;	//20 is good I guess?
 public:
@@ -294,12 +295,18 @@ public:
 	//Car Camera and other game data
 	//------------------------------------------------------------------------------------------------------------------------------
 	CarCamera*							m_carCamera = nullptr;
+	CarCamera*							m_player2CarCamera = nullptr;
+
 	float								m_frameZoomDelta = 0.f;
+	Vec3								m_carStartPosition = Vec3(0.f, 10.f, 0.f);
+	Vec3								m_p2CarStartPosition = Vec3(0.f, 10.f, 20.f);
 
 	//------------------------------------------------------------------------------------------------------------------------------
 	// Waypoint System
 	//------------------------------------------------------------------------------------------------------------------------------
 	WaypointSystem						m_waypointSystem;
+	WaypointSystem						m_wayPointSystemP2;
+	
 	bool								m_debugRenderWaypoints = false;
 
 };

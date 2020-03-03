@@ -17,6 +17,12 @@ public:
 	void	UpdateInputs();
 	void	VehiclePhysicsUpdate(float deltaTime);
 
+	void	SetControllerIDToUse(int controllerID);
+
+	//Vehicle Setter
+	void	SetVehiclePosition(const Vec3& targetPosition);
+	void	SetVehicleTransform(const Vec3& targetPosition, const PxQuat& quaternion);
+
 	//Vehicle Getters
 	PxVehicleDrive4W* GetVehicle() const;
 	PxVehicleDrive4WRawInputData* GetVehicleInputData() const;
@@ -40,6 +46,7 @@ public:
 	void	ReleaseVehicle();
 private:
 
+	int			m_controllerID = 0;
 
 private:
 	bool		m_digitalControlEnabled = false;

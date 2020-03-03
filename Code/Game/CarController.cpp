@@ -12,7 +12,7 @@
 float gSteerVsForwardSpeedData[2 * 8] =
 {
 	//SteerAmount	to	Forward Speed
-	0.0f,		0.75f,
+	0.0f,		1.f,
 	5.0f,		0.75f,
 	30.0f,		0.125f,
 	120.0f,		0.1f,
@@ -71,7 +71,7 @@ void CarController::UpdateInputs()
 	ReleaseAllControls();
 
 	//Get Xbox controller data
-	XboxController playerController = g_inputSystem->GetXboxController(0);
+	XboxController playerController = g_inputSystem->GetXboxController(m_controllerID);
 	AnalogJoyStick leftStick = playerController.GetLeftJoystick();
 	AnalogJoyStick rightStick = playerController.GetRightJoystick();
 
@@ -161,6 +161,36 @@ void CarController::VehiclePhysicsUpdate(float deltaTime)
 
 	//Work out if the vehicle is in the air.
 	m_isVehicleInAir = vehicle4W->getRigidDynamicActor()->isSleeping() ? false : PxVehicleIsInAir(vehicleQueryResults[0]);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void CarController::SetControllerIDToUse(int controllerID)
+{
+	m_controllerID = controllerID;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void CarController::SetVehiclePosition(const Vec3& targetPosition)
+{
+	PxVec3 pxPosition = g_PxPhysXSystem->VecToPxVector(targetPosition);
+
+	PxTransform pxTransform;
+	pxTransform.p = pxPosition;
+	pxTransform.q = m_vehicle4W->getRigidDynamicActor()->getGlobalPose().q;
+	
+	m_vehicle4W->getRigidDynamicActor()->setGlobalPose(pxTransform);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void CarController::SetVehicleTransform(const Vec3& targetPosition, const PxQuat& quaternion)
+{
+	PxVec3 pxPosition = g_PxPhysXSystem->VecToPxVector(targetPosition);
+
+	PxTransform pxTransform;
+	pxTransform.p = pxPosition;
+	pxTransform.q = quaternion;
+
+	m_vehicle4W->getRigidDynamicActor()->setGlobalPose(pxTransform);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

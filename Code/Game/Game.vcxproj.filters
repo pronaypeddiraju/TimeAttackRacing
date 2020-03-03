@@ -40,6 +40,9 @@
     <ClCompile Include="WaypointSystem.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
+    <ClCompile Include="SplitScreenSystem.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entity.hpp">
@@ -65,5 +68,6 @@
     <ClInclude Include="WaypointSystem.hpp" />
     <ClInclude Include="WaypointTriggerBased.hpp" />
     <ClInclude Include="WaypointRegionBased.hpp" />
+    <ClInclude Include="SplitScreenSystem.hpp" />
   </ItemGroup>
 </Project>
