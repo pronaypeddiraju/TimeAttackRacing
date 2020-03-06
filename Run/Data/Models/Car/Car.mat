@@ -5,5 +5,6 @@
   <normal   src="Car/RallyFighterTexture_N.png" />
 
   <sampler idx="0" type="linear" />
+  <sampler idx="1" type="linear" />
 
 </material>

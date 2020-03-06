@@ -45,50 +45,47 @@ class Game
 public:
 	Game();
 	~Game();
-	
-	static bool TestEvent(EventArgs& args);
-	static bool ToggleLight1(EventArgs& args);
-	static bool ToggleLight2(EventArgs& args);
-	static bool ToggleLight3(EventArgs& args);
-	static bool ToggleLight4(EventArgs& args);
-	static bool ToggleAllPointLights(EventArgs& args);
-
+		
 	void								StartUp();
-	
+	void								DebugEnabled();
+	void								Shutdown();
+	void								Update(float deltaTime);
+	void								FixedUpdate(float deltaTime);
+	void								UpdateImGUI();
+
+	//Initial Setups
 	void								SetupMouseData();
 	void								SetupCameras();
 	void								GetandSetShaders();
 	void								LoadGameTextures();
-	//void								CreateIsoSpriteDefenitions();
 	void								LoadGameMaterials();
 	void								CreateInitialMeshes();
 	void								CreateInitialLight();
 	void								SetStartupDebugRenderObjects();
 	void								SetupPhysX();
+	
+	//Input Handling
+	void								HandleKeyPressed(unsigned char keyCode);
+	void								HandleKeyReleased(unsigned char keyCode);
+	void								HandleCharacter(unsigned char charCode);
 
+	bool								HandleMouseScroll(float wheelDelta);
+	void								HandleMouseInputs(float deltaTime);
+
+	//Create PhysX World Objects
 	void								CreatePhysXVehicleBoxWall();
 	void								CreateObstacleWall(const int numHorizontalBoxes, const int numVerticalBoxes, const float boxSize, const PxVec3& pos, const PxQuat& quat);
 	void								CreatePhysXVehicleRamp();
 	void								CreatePhysXVehicleObstacles();
-	
-	PxRigidActor*						GetCarActor() const;
 
-	//void								CreatePhysXArticulationChain();
-	//void								CreatePhysXChains(const Vec3& position, int length, const PxGeometry& geometry, float separation);
-	
 	void								CreatePhysXConvexHull();
 	void								CreatePhysXStack(const Vec3& position, uint size, float halfExtent);
+	
+	//Race Logic and Systems
 	void								CreateWayPoints();
+	PxRigidActor*						GetCarActor() const;
 
-	void								HandleKeyPressed(unsigned char keyCode);
-	void								HandleKeyReleased( unsigned char keyCode );
-	void								HandleCharacter( unsigned char charCode );
-
-	bool								HandleMouseScroll(float wheelDelta);
-
-	void								DebugEnabled();
-	void								Shutdown();
-
+	//Render Logic
 	void								Render() const;
 	void								RenderRacetrack() const;
 	void								RenderUsingMaterial() const;
@@ -99,32 +96,26 @@ public:
 	
 	void								DebugRenderWaypointSystem() const;
 	void								RenderWaypointSystem() const;
-
-	//void								RenderRegionBasedWaypoint() const;
 	
 	//For now let's say this is no longer necessary 
 	//void								RenderPhysXShapesForVehicle(const std::vector<PxShape*> shapes, int numShapes, Rgba& color) const;
 	
+	//Drawing Utilities for PhysX Shapes
 	Rgba								GetColorForGeometry(int type, bool isSleeping) const;
 	void								AddMeshForPxCube(CPUMesh& boxMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
 	void								AddMeshForPxSphere(CPUMesh& sphereMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
 	void								AddMeshForPxCapsule(CPUMesh& capMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
 	void								AddMeshForConvexMesh(CPUMesh& cvxMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
 	
-	//void								RenderIsoSprite() const;
 	void								DebugRenderToScreen() const;
 	void								DebugRenderToCamera() const;
 	
 	void								PostRender();
 	
-	void								Update( float deltaTime );
-	void								FixedUpdate(float deltaTime);
 	void								UpdatePhysXCar( float deltaTime );
 	void								UpdateCarCamera(float deltaTime);
-	void								UpdateImGUI();
 	void								UpdateImGUIPhysXWidget();
 	void								UpdateImGUIDebugWidget();
-	void								UpdateMouseInputs(float deltaTime);
 	void								UpdateLightPositions();
 	
 	bool								IsAlive();
@@ -286,7 +277,6 @@ public:
 
 	bool								m_debugViewCarCollider = false;
 
-	//WaypointTriggerBased				m_wayPointTest;
 	Vec3								m_wayPointPosition = Vec3(15.f, 0.f, 10.f);
 	Vec3								m_wayPointHalfExtents = Vec3(5.f, 5.f, 1.f);
 	WaypointRegionBased					m_wayPointRegionBased;

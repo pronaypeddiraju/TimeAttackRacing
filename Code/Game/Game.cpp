@@ -16,6 +16,7 @@
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Math/Vertex_Lit.hpp"
 #include "Engine/PhysXSystem/PhysXSystem.hpp"
+#include "Engine/PhysXSystem/PhysXVehicleFilterShader.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/ColorTargetView.hpp"
@@ -27,9 +28,6 @@
 #include "Engine/Renderer/SpriteSheet.hpp"
 #include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/TextureView.hpp"
-#include "Engine/PhysXSystem/PhysXVehicleFilterShader.hpp"
-//PhysX Includes
-//#include "ThirdParty/PhysX/include/PxPhysicsAPI.h"
 
 //------------------------------------------------------------------------------------------------------------------------------
 float g_shakeAmount = 0.0f;
@@ -67,18 +65,7 @@ void Game::StartUp()
 
 	LoadGameMaterials();
 
-	g_devConsole->PrintString(Rgba::BLUE, "this is a test string");
-	g_devConsole->PrintString(Rgba::RED, "this is also a test string");
-	g_devConsole->PrintString(Rgba::GREEN, "damn this dev console lit!");
-	g_devConsole->PrintString(Rgba::WHITE, "Last thing I printed");
-
-	g_eventSystem->SubscribeEventCallBackFn("TestEvent", TestEvent);
-
-	g_eventSystem->SubscribeEventCallBackFn("ToggleLight1", ToggleLight1);
-	g_eventSystem->SubscribeEventCallBackFn("ToggleLight2", ToggleLight2);
-	g_eventSystem->SubscribeEventCallBackFn("ToggleLight3", ToggleLight3);
-	g_eventSystem->SubscribeEventCallBackFn("ToggleLight4", ToggleLight4);
-	g_eventSystem->SubscribeEventCallBackFn("ToggleAllPointLights", ToggleAllPointLights);
+	g_devConsole->PrintString(Rgba::ORGANIC_BLUE, "This is the Dev Console");
 
 	CreateInitialLight();
 
@@ -121,11 +108,8 @@ void Game::StartUp()
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::SetupMouseData()
 {
-	//IntVec2 clientCenter = g_windowContext->GetClientCenter();
-	//g_windowContext->SetClientMousePosition(clientCenter);
-
-	g_windowContext->SetMouseMode(MOUSE_MODE_RELATIVE);
-	g_windowContext->HideMouse();
+	g_windowContext->SetMouseMode(MOUSE_MODE_ABSOLUTE);
+	//g_windowContext->HideMouse();
 }
 
 void Game::SetupCameras()
@@ -145,6 +129,8 @@ void Game::SetupCameras()
 	m_camPosition = Vec3(30.f, 30.f, 60.f);
 	m_mainCamera->SetColorTarget(nullptr);
 	m_mainCamera->SetPerspectiveProjection( m_camFOVDegrees, 0.1f, 1000.0f, SCREEN_ASPECT);
+
+	TODO("Change this to use the split screen system instead");
 
 	//CarCamera
 	m_carCamera = new CarCamera();
@@ -345,20 +331,6 @@ void Game::SetupPhysX()
 	//Add things to your scene
 	PxRigidStatic* groundPlane = PxCreatePlane(*physX, PxPlane(0, 1, 0, 0), *pxMat);
 	pxScene->addActor(*groundPlane);
-
-// 	for (int setIndex = 0; setIndex < 5; setIndex++)
-// 	{
-// 		CreatePhysXStack(Vec3(0, 0, m_anotherTestTempHackStackZ -= 10.f), 10, 2.f);
-// 	}
-
-	//CreatePhysXConvexHull();
-	//CreatePhysXChains(m_chainPosition, m_chainLength, PxBoxGeometry(2.0f, 0.5f, 0.5f), m_chainSeperation);
-	//CreatePhysXArticulationChain();
-
-	//Vehicle SDK only
-	//CreatePhysXVehicleObstacles();
-	//CreatePhysXVehicleBoxWall();
-	//CreatePhysXVehicleRamp();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -500,131 +472,6 @@ physx::PxRigidActor* Game::GetCarActor() const
 	return m_carController->GetVehicle()->getRigidDynamicActor();
 }
 
-/*
-//------------------------------------------------------------------------------------------------------------------------------
-void Game::CreatePhysXArticulationChain()
-{
-	PxPhysics* physX = g_PxPhysXSystem->GetPhysXSDK();
-	PxMaterial* material = g_PxPhysXSystem->GetDefaultPxMaterial();
-	PxScene* scene = g_PxPhysXSystem->GetPhysXScene();
-	PxArticulation* articulation = physX->createArticulation();
-
-	// Stabilization can create artifacts on jointed objects so we just disable it
-	articulation->setStabilizationThreshold(0.0f);
-
-	articulation->setMaxProjectionIterations(16);
-	articulation->setSeparationTolerance(0.001f);
-
-	const float radius = 0.5f * m_articulationScale;
-	const float halfHeight = 1.0f * m_articulationScale;
-
-	const PxVec3 initPos(50.0f, 24.0f, 0.0f);
-	PxVec3 pos = initPos;
-	PxShape* capsuleShape = physX->createShape(PxCapsuleGeometry(radius, halfHeight), *material);
-	PxArticulationLink* firstLink = nullptr;
-	PxArticulationLink* parent = nullptr;
-
-	const bool overlappingLinks = true;	// Change this for another kind of rope
-
-	articulation->setSolverIterationCounts(16);
-
-	// Create rope
-	for (int linkIndex = 0; linkIndex < m_numCapsules; linkIndex++)
-	{
-		PxArticulationLink* link = articulation->createLink(parent, PxTransform(pos));
-		if (!firstLink)
-			firstLink = link;
-
-		link->attachShape(*capsuleShape);
-		PxRigidBodyExt::setMassAndUpdateInertia(*link, m_capsuleMass);
-
-		link->setLinearDamping(m_linkLinearDamping);
-		link->setAngularDamping(m_linkAngularDamping);
-
-		link->setMaxAngularVelocity(m_linkMaxAngularVelocity);
-		link->setMaxLinearVelocity(m_linkMaxLinearVelocity);
-
-		PxArticulationJointBase* joint = link->getInboundJoint();
-
-		if (joint)	// Will be null for root link
-		{
-			if (overlappingLinks)
-			{
-				joint->setParentPose(PxTransform(PxVec3(halfHeight, 0.0f, 0.0f)));
-				joint->setChildPose(PxTransform(PxVec3(-halfHeight, 0.0f, 0.0f)));
-			}
-			else
-			{
-				joint->setParentPose(PxTransform(PxVec3(radius + halfHeight, 0.0f, 0.0f)));
-				joint->setChildPose(PxTransform(PxVec3(-radius - halfHeight, 0.0f, 0.0f)));
-			}
-		}
-
-		if (overlappingLinks)
-			pos.x += (radius + halfHeight * 2.0f);
-		else
-			pos.x += (radius + halfHeight) * 2.0f;
-		parent = link;
-	}
-
-	//Attach large & heavy box at the end of the rope
-	{
-		PxShape* boxShape = physX->createShape(PxBoxGeometry(m_weightSize, m_weightSize, m_weightSize), *material);
-
-		pos.x -= (radius + halfHeight) * 2.0f;
-		pos.x += (radius + halfHeight) + m_weightSize;
-
-		PxArticulationLink* link = articulation->createLink(parent, PxTransform(pos));
-
-		link->setLinearDamping(m_linkLinearDamping);
-		link->setAngularDamping(m_linkAngularDamping);
-		link->setMaxAngularVelocity(m_linkMaxAngularVelocity);
-		link->setMaxLinearVelocity(m_linkMaxLinearVelocity);
-
-		link->attachShape(*boxShape);
-		PxRigidBodyExt::setMassAndUpdateInertia(*link, m_weightMass);
-
-		PxArticulationJointBase* joint = link->getInboundJoint();
-
-		if (joint)	// Will be null for root link
-		{
-			joint->setParentPose(PxTransform(PxVec3(radius + halfHeight, 0.0f, 0.0f)));
-			joint->setChildPose(PxTransform(PxVec3(-m_weightSize, 0.0f, 0.0f)));
-		}
-	}
-	scene->addArticulation(*articulation);
-
-
-	// Attach articulation to static world
-	PxShape* anchorShape = physX->createShape(PxSphereGeometry(0.05f), *material);
-	PxRigidStatic* anchor = PxCreateStatic(*physX, PxTransform(initPos), *anchorShape);
-	scene->addActor(*anchor);
-	PxSphericalJoint* sphericalJoint = PxSphericalJointCreate(*physX, anchor, PxTransform(PxVec3(0.0f)), firstLink, PxTransform(PxVec3(0.0f)));
-	PX_UNUSED(sphericalJoint);
-
-	// Create obstacle
-	PxShape* boxShape = physX->createShape(PxBoxGeometry(1.0f, 0.1f, 2.0f), *material);
-	PxRigidStatic* obstacle = PxCreateStatic(*physX, PxTransform(initPos + PxVec3(10.0f, -3.0f, 0.0f)), *boxShape);
-	scene->addActor(*obstacle);
-}
-
-
-//------------------------------------------------------------------------------------------------------------------------------
-void Game::CreatePhysXChains(const Vec3& position, int length, const PxGeometry& geometry, float separation)
-{
-	Vec3 offsetZ = Vec3(0.f, 0.f, 20.f);
-	Vec3 offsetY = Vec3(0.f, 20.f, 0.f);
-
-	g_PxPhysXSystem->CreateSimpleSphericalChain(position, length, geometry, separation);
-	g_PxPhysXSystem->CreateLimitedSphericalChain(position + offsetY, length, geometry, separation, m_defaultConeFreedomY, m_defaultConeFreedomZ, m_defaultContactDistance);
-
-	g_PxPhysXSystem->CreateSimpleFixedChain(position + offsetZ, length, geometry, separation);
-	g_PxPhysXSystem->CreateBreakableFixedChain(position + offsetZ + offsetY, length, geometry, separation, m_defaultBreakForce, m_defaultBreakTorque);
-
-	g_PxPhysXSystem->CreateDampedD6Chain(position + (offsetZ * 2.f), length, geometry, separation, m_defaultDriveStiffness, m_defaultDriveDamping, m_defaultDriveForceLimit, m_isDriveAccelerating);
-}
-*/
-
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::CreatePhysXConvexHull()
 {
@@ -669,101 +516,6 @@ void Game::CreatePhysXStack(const Vec3& position, uint size, float halfExtent)
 
 	//release the shape now, we don't need it anymore since everything has been added to the PhysX scene
 	shape->release();
-}
-
-//------------------------------------------------------------------------------------------------------------------------------
-STATIC bool Game::TestEvent(EventArgs& args)
-{
-	UNUSED(args);
-	g_devConsole->PrintString(Rgba::YELLOW, "This a test event called from Game.cpp");
-	return true;
-}
-
-//------------------------------------------------------------------------------------------------------------------------------
-STATIC bool Game::ToggleLight1( EventArgs& args )
-{
-	UNUSED(args);
-	if(g_renderContext->m_cpuLightBuffer.lights[1].color.a != 0.f)
-	{
-		g_devConsole->PrintString(Rgba::RED, "Disabling Light 1");
-		g_renderContext->m_cpuLightBuffer.lights[1].color.a = 0.f;
-	}
-	else
-	{
-		g_devConsole->PrintString(Rgba::GREEN, "Enabling Light 1");
-		g_renderContext->m_cpuLightBuffer.lights[1].color.a = 1.f;
-	}
-	return true;
-}
-
-//------------------------------------------------------------------------------------------------------------------------------
-STATIC bool Game::ToggleLight2( EventArgs& args )
-{
-	UNUSED(args);
-	if(g_renderContext->m_cpuLightBuffer.lights[2].color.a != 0.f)
-	{
-		g_devConsole->PrintString(Rgba::RED, "Disabling Light 2");
-		g_renderContext->m_cpuLightBuffer.lights[2].color.a = 0.f;
-	}
-	else
-	{
-		g_devConsole->PrintString(Rgba::GREEN, "Enabling Light 2");
-		g_renderContext->m_cpuLightBuffer.lights[2].color.a = 1.f;
-	}
-	return true;
-}
-
-//------------------------------------------------------------------------------------------------------------------------------
-STATIC bool Game::ToggleLight3( EventArgs& args )
-{
-	UNUSED(args);
-	if(g_renderContext->m_cpuLightBuffer.lights[3].color.a != 0.f)
-	{
-		g_devConsole->PrintString(Rgba::RED, "Disabling Light 3");
-		g_renderContext->m_cpuLightBuffer.lights[3].color.a = 0.f;
-	}
-	else
-	{
-		g_devConsole->PrintString(Rgba::GREEN, "Enabling Light 3");
-		g_renderContext->m_cpuLightBuffer.lights[3].color.a = 1.f;
-	}
-	return true;
-}
-
-//------------------------------------------------------------------------------------------------------------------------------
-bool Game::ToggleLight4( EventArgs& args )
-{
-	UNUSED(args);
-	if(g_renderContext->m_cpuLightBuffer.lights[4].color.a != 0.f)
-	{
-		g_devConsole->PrintString(Rgba::RED, "Disabling Light 4");
-		g_renderContext->m_cpuLightBuffer.lights[4].color.a = 0.f;
-	}
-	else
-	{
-		g_devConsole->PrintString(Rgba::GREEN, "Enabling Light 4");
-		g_renderContext->m_cpuLightBuffer.lights[4].color.a = 1.f;
-	}
-	return true;
-}
-
-//------------------------------------------------------------------------------------------------------------------------------
-STATIC bool Game::ToggleAllPointLights( EventArgs& args )
-{
-	UNUSED(args);
-	for(int i = 1; i < 5; i++)
-	{
-		if(g_renderContext->m_cpuLightBuffer.lights[i].color.a != 0.f)
-		{
-			g_renderContext->m_cpuLightBuffer.lights[i].color.a = 0.f;
-		}
-		else
-		{
-			g_renderContext->m_cpuLightBuffer.lights[i].color.a = 1.f;
-		}
-	}
-	g_devConsole->PrintString(Rgba::GREEN, "Toggled All Point Lights");
-	return true;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1190,6 +942,9 @@ void Game::RenderPhysXCar(const CarController& carController) const
 	int numShapes = car->getNbShapes();
 	car->getShapes(shapes, numShapes);
 
+	//The car and wheel use the same material so only need to bind this once
+	g_renderContext->BindMaterial(g_renderContext->CreateOrGetMaterialFromFile(m_wheelModel->GetDefaultMaterialName()));
+
 	for (int shapeIndex = 0; shapeIndex < numShapes; shapeIndex++)
 	{
 		PxConvexMeshGeometry geometry;
@@ -1211,7 +966,6 @@ void Game::RenderPhysXCar(const CarController& carController) const
 			g_renderContext->SetModelMatrix(model);
 
 			//Draw the car mesh
-			g_renderContext->BindMaterial(g_renderContext->CreateOrGetMaterialFromFile(m_carModel->GetDefaultMaterialName()));
 			g_renderContext->SetModelMatrix(model);
 			g_renderContext->DrawMesh(m_carModel);
 
@@ -1233,7 +987,6 @@ void Game::RenderPhysXCar(const CarController& carController) const
 		}
 		else
 		{
-			g_renderContext->BindMaterial(g_renderContext->CreateOrGetMaterialFromFile(m_wheelModel->GetDefaultMaterialName()));
 			g_renderContext->SetModelMatrix(model);
 			if (shapeIndex == 1 || shapeIndex == 3)
 			{
@@ -1554,7 +1307,6 @@ void Game::AddMeshForConvexMesh(CPUMesh& cvxMesh, const PxRigidActor& actor, con
 	PxConvexMeshGeometry convexGeometry;
 	shape.getConvexMeshGeometry(convexGeometry);
 
-	//const Vec3& scale = g_PxPhysXSystem->PxVectorToVec(convexGeometry.scale.scale);
 	PxConvexMesh* pxCvxMesh = convexGeometry.convexMesh;
 	const int nbPolys = pxCvxMesh->getNbPolygons();
 	const uint8_t* polygons = pxCvxMesh->getIndexBuffer();
@@ -1594,7 +1346,6 @@ void Game::AddMeshForConvexMesh(CPUMesh& cvxMesh, const PxRigidActor& actor, con
 
 			PxVec3 fnormal = e0.cross(e1);
 			fnormal.normalize();
-			//fnormal *= -1.f;
 
 			VertexMaster vert;
 			vert.m_color = color;
@@ -1627,22 +1378,6 @@ void Game::AddMeshForConvexMesh(CPUMesh& cvxMesh, const PxRigidActor& actor, con
 	{
 		cvxMesh.AddIndex(indexIndex);
 	}
-
-	/*
-	Matrix44 pose;
-	pose.SetIBasis(g_PxPhysXSystem->PxVectorToVec(pxTransform.column0));
-	pose.SetJBasis(g_PxPhysXSystem->PxVectorToVec(pxTransform.column1));
-	pose.SetKBasis(g_PxPhysXSystem->PxVectorToVec(pxTransform.column2));
-	pose.SetTBasis(g_PxPhysXSystem->PxVectorToVec(pxTransform.column3));
-	
-
-	int numVerts = cvxMesh.GetVertexCount();
-	int limit = nbVerts;
-	Matrix44 rotationMatrix = Matrix44::MakeZRotationDegrees(90.f);
-
-	cvxMesh.TransformVerticesInRange(limit, numVerts, rotationMatrix);
-	cvxMesh.TransformVerticesInRange(limit, numVerts, pose);
-	*/
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1693,9 +1428,6 @@ void Game::PostRender()
 		g_debugRenderer->SetClientDimensions( ctv->m_height, ctv->m_width );
 
 		m_isDebugSetup = true;
-
-		EventArgs args;
-		ToggleAllPointLights(args);
 	}
 
 	//All screen Debug information
@@ -1711,7 +1443,7 @@ void Game::Update( float deltaTime )
 {
 	gProfiler->ProfilerPush("Game Update");
 
-	UpdateMouseInputs(deltaTime);
+	HandleMouseInputs(deltaTime);
 	
 	Vec3 vehiclePosition = m_carController->GetVehiclePosition();
 	if (vehiclePosition.y < 0.f)
@@ -1756,10 +1488,8 @@ void Game::Update( float deltaTime )
 	m_carController->Update(deltaTime);
 	m_player2CarController->Update(deltaTime);
 
+	//Update the waypoint system
 	m_waypointSystem.Update(m_carController->GetVehiclePosition());
-
-	//We need to call update on the WaypointSystem
-	//m_wayPointRegionBased.HasPointCrossedWaypoint(m_carController->GetVehiclePosition());
 
 	gProfiler->ProfilerPop();
 }
@@ -1891,7 +1621,7 @@ void Game::UpdateImGUIDebugWidget()
 	ImGui::Checkbox("Enable Convex Hull Debug", &ui_enableConvexHullRenders);
 	ImGui::Checkbox("Enable Car Debug", &ui_enableCarDebug);
 
-	//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
 	m_directionalLightPos.x = ui_dirLight[0];
 	m_directionalLightPos.y = ui_dirLight[1];
@@ -1913,20 +1643,8 @@ bool Game::IsAlive()
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-// void Game::RenderRegionBasedWaypoint() const
-// {
-// 	//NOTE: This code is only to test if the waypoint ssytem works
-// 	CPUMesh boxMesh;	
-// 	CPUMeshAddCube(&boxMesh, AABB3(m_wayPointRegionBased.GetWaypointMins(), m_wayPointRegionBased.GetWaypointMaxs()), Rgba::GREEN);
-// 	GPUMesh mesh = GPUMesh(g_renderContext);
-// 	mesh.CreateFromCPUMesh<Vertex_Lit>(&boxMesh, GPU_MEMORY_USAGE_STATIC);
-// 	g_renderContext->DrawMesh(&mesh);
-// }
-
-//------------------------------------------------------------------------------------------------------------------------------
 void Game::CreateWayPoints()
 {
-	TODO("This initializes the waypoints in the system");
 	m_waypointSystem.Startup();
 	m_waypointSystem.AddNewWayPoint(m_wayPointPosition, m_wayPointHalfExtents, 0);
 	m_waypointSystem.AddNewWayPoint(Vec3(15.f, 0.f, 50.f), m_wayPointHalfExtents, 1);
@@ -1944,61 +1662,13 @@ void Game::LoadGameMaterials()
 void Game::UpdateLightPositions()
 {
 	g_renderContext->EnableDirectionalLight(Vec3::ZERO, m_directionalLightPos);
-
-	/*
-	//Update all the 4 light positions
-	float currentTime = static_cast<float>(GetCurrentTimeSeconds());
-	DebugRenderOptionsT options;
-	options.space = DEBUG_RENDER_WORLD;
-	//Light 1
-	m_dynamicLight0Pos = Vec3(-3.f, 2.f * CosDegrees(currentTime * 20.f), 2.f * SinDegrees(currentTime * 20.f));
-
-	g_renderContext->m_cpuLightBuffer.lights[1].position = m_dynamicLight0Pos;
-	g_renderContext->m_lightBufferDirty = true;
-
-	options.beginColor = Rgba::GREEN;
-	options.endColor = Rgba::GREEN * 0.4f;
-	g_debugRenderer->DebugRenderPoint(options, m_dynamicLight0Pos, 0.1f, 0.1f, nullptr);
-
-	//Light 2
-	m_dynamicLight1Pos = Vec3(3.f, 3.f * CosDegrees(currentTime * 40.f), 3.f * SinDegrees(currentTime * 40.f));
-	g_renderContext->m_cpuLightBuffer.lights[2].position = m_dynamicLight1Pos;
-	g_renderContext->m_lightBufferDirty = true;
-
-	options.beginColor = Rgba::BLUE;
-	options.endColor = Rgba::BLUE * 0.4f;
-	g_debugRenderer->DebugRenderPoint(options, m_dynamicLight1Pos, 0.1f, 0.1f, nullptr);
-
-	//Light 3
-	m_dynamicLight2Pos = Vec3(-1.f, 1.f * CosDegrees(currentTime * 30.f), 1.f * SinDegrees(currentTime * 30.f));
-	g_renderContext->m_cpuLightBuffer.lights[3].position = m_dynamicLight2Pos;
-	g_renderContext->m_lightBufferDirty = true;
-
-	options.beginColor = Rgba::YELLOW;
-	options.endColor = Rgba::YELLOW * 0.4f;
-	g_debugRenderer->DebugRenderPoint(options, m_dynamicLight2Pos, 0.1f, 0.1f, nullptr);
-	
-	//Light 4
-	m_dynamicLight3Pos = Vec3(4.f * CosDegrees(currentTime * 60.f), 0.f , 4.f * SinDegrees(currentTime * 60.f));
-	g_renderContext->m_cpuLightBuffer.lights[4].position = m_dynamicLight3Pos;
-	g_renderContext->m_lightBufferDirty = true;
-
-	options.beginColor = Rgba::MAGENTA;
-	options.endColor = Rgba::MAGENTA * 0.4f;
-	g_debugRenderer->DebugRenderPoint(options, m_dynamicLight3Pos, 0.1f, 0.1f, nullptr);
-	*/
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::CreateInitialLight()
 {
-	m_directionalLightPos = Vec3(1.f, 1.f, 1.f).GetNormalized();
-	g_renderContext->EnableDirectionalLight(Vec3(1.f, 1.f, 1.f), m_directionalLightPos);
-
-// 	g_renderContext->EnablePointLight(1U, m_dynamicLight0Pos, Vec3(1.f, 0.f, 0.5f),Rgba::GREEN);
-// 	g_renderContext->EnablePointLight(2U, m_dynamicLight1Pos, Vec3(0.f, -1.f, 0.f), Rgba::BLUE, 1.f, Vec3(0.f, 1.f, 0.f), Vec3(0.f, 0.1f, 0.f));
-// 	g_renderContext->EnablePointLight(3U, m_dynamicLight2Pos, Vec3(0.f, 0.f, 1.f), Rgba::YELLOW, 1.f, Vec3(0.f, 1.f, 0.1f), Vec3(0.f, 0.1f, 0.f));
-// 	g_renderContext->EnablePointLight(4U, m_dynamicLight3Pos, Vec3(-1.f, -1.f, 0.f), Rgba::MAGENTA, 1.f, Vec3(0.f, 0.f, 1.f), Vec3(0.f, 0.f, 1.f));
+	m_directionalLightPos = Vec3(1.f, -1.f, -1.f).GetNormalized();
+	g_renderContext->EnableDirectionalLight(Vec3(1.f, 10.f, 1.f), m_directionalLightPos);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -2057,9 +1727,6 @@ void Game::CreateInitialMeshes()
 	m_wheelModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelMeshPath);
 	m_wheelFlippedModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelFlippedMeshPath);
 
-	//m_trackPieceModel = g_renderContext->CreateOrGetMeshFromFile(m_trackAngledPath);
-	//m_trackJumpPiece = g_renderContext->CreateOrGetMeshFromFile(m_trackJumpPath);
-
 	m_trackTestModel = g_renderContext->CreateOrGetMeshFromFile(m_trackTestPath);
 	m_trackCollidersTestModel = g_renderContext->CreateOrGetMeshFromFile(m_trackCollisionsTestPath);
 }
@@ -2077,6 +1744,8 @@ void Game::LoadGameTextures()
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::GetandSetShaders()
 {
+	TODO("Revisit this to make sure we have the correct shader we want");
+
 	//Get the Shader
 	m_shader = g_renderContext->CreateOrGetShaderFromFile(m_xmlShaderPath);
 	m_shader->SetDepth(eCompareOp::COMPARE_LEQUAL, true);
@@ -2089,7 +1758,7 @@ void Game::GetandSetShaders()
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-void Game::UpdateMouseInputs(float deltaTime)
+void Game::HandleMouseInputs(float deltaTime)
 {
 	//Get pitch and yaw from mouse
 	IntVec2 mouseRelativePos = g_windowContext->GetClientMouseRelativeMovement();

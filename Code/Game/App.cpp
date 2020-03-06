@@ -240,15 +240,12 @@ void App::Update()
 
 	while (m_timeCacheForFrame > m_fixedTimeStepForUpdate)
 	{
-		g_devConsole->UpdateConsole(m_fixedTimeStepForUpdate);
-		g_PxPhysXSystem->Update(m_fixedTimeStepForUpdate);
-		m_game->FixedUpdate(m_fixedTimeStepForUpdate);
+		g_devConsole->UpdateConsole((float)m_fixedTimeStepForUpdate);
+		g_PxPhysXSystem->Update((float)m_fixedTimeStepForUpdate);
+		m_game->FixedUpdate((float)m_fixedTimeStepForUpdate);
 
 		m_timeCacheForFrame -= m_fixedTimeStepForUpdate;
 	}
-
-	//DebugRenderOptionsT options;
-	//g_debugRenderer->DebugAddToLog(options, text, Rgba::YELLOW, 0.f, m_timeAtThisFrameBegin);
 
 	float deltaTime = static_cast<float>(m_timeAtThisFrameBegin - m_timeAtLastFrameBegin);
 

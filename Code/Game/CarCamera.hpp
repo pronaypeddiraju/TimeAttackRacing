@@ -28,7 +28,7 @@ public:
 
 private:
 	Vec3			m_focalPoint = Vec3::ZERO;
-	float			m_distance = 5.f;
+	float			m_distance = 7.f;
 	float			m_height = 2.f;
 
 	float			m_currentZoom = 0.f;
@@ -39,7 +39,7 @@ private:
 
 	float			m_defaultAngle = 90.0f;
 	float			m_defaultTilt = -70.0f;
-	float			m_lerpSpeed = 6.f;
+	float			m_lerpSpeed = 7.f;
 
 	Vec2			m_tiltBounds = Vec2(10.f, 40.f);
 
