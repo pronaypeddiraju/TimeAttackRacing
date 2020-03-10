@@ -193,6 +193,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="Car.cpp" />
     <ClCompile Include="CarCamera.cpp" />
     <ClCompile Include="CarController.cpp" />
     <ClCompile Include="Entity.cpp" />
@@ -211,6 +212,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp" />
+    <ClInclude Include="Car.hpp" />
     <ClInclude Include="CarCamera.hpp" />
     <ClInclude Include="CarController.hpp" />
     <ClInclude Include="EngineBuildPreferences.hpp" />

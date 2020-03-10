@@ -44,6 +44,9 @@ private:
 	bool		m_isQuitting = false;
 	bool		m_isPaused = false;
 	bool		m_isSlowMo = false;
+	
+	//Minumum frames force wait
+	int			m_minFramesToWait = 10;
 
 	Game*		m_game = nullptr;
 	

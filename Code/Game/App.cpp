@@ -238,13 +238,20 @@ void App::Update()
 
 	m_timeCacheForFrame += m_timeAtThisFrameBegin - m_timeAtLastFrameBegin;
 
-	while (m_timeCacheForFrame > m_fixedTimeStepForUpdate)
+	if (m_minFramesToWait < 0)
 	{
-		g_devConsole->UpdateConsole((float)m_fixedTimeStepForUpdate);
-		g_PxPhysXSystem->Update((float)m_fixedTimeStepForUpdate);
-		m_game->FixedUpdate((float)m_fixedTimeStepForUpdate);
+		while (m_timeCacheForFrame > m_fixedTimeStepForUpdate)
+		{
+			g_devConsole->UpdateConsole((float)m_fixedTimeStepForUpdate);
+			g_PxPhysXSystem->Update((float)m_fixedTimeStepForUpdate);
+			m_game->FixedUpdate((float)m_fixedTimeStepForUpdate);
 
-		m_timeCacheForFrame -= m_fixedTimeStepForUpdate;
+			m_timeCacheForFrame -= m_fixedTimeStepForUpdate;
+		}
+	}
+	else
+	{
+		m_minFramesToWait--;
 	}
 
 	float deltaTime = static_cast<float>(m_timeAtThisFrameBegin - m_timeAtLastFrameBegin);

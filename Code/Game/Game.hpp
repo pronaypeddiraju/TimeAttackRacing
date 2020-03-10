@@ -14,6 +14,8 @@
 #include "Game/WaypointTriggerBased.hpp"
 #include "Game/WaypointRegionBased.hpp"
 #include "Game/WaypointSystem.hpp"
+#include "Game/SplitScreenSystem.hpp"
+#include "Game/Car.hpp"
 //Third Party
 #include "extensions/PxDefaultAllocator.h"
 #include "extensions/PxDefaultCpuDispatcher.h"
@@ -61,9 +63,13 @@ public:
 	void								LoadGameMaterials();
 	void								CreateInitialMeshes();
 	void								CreateInitialLight();
-	void								SetStartupDebugRenderObjects();
 	void								SetupPhysX();
 	
+	void								SetupSplitScreenSystem();
+
+	//Only for debug rendering available debug shapes in the scene
+	void								SetStartupDebugRenderObjects();
+
 	//Input Handling
 	void								HandleKeyPressed(unsigned char keyCode);
 	void								HandleKeyReleased(unsigned char keyCode);
@@ -126,10 +132,20 @@ private:
 	bool								m_isDebugSetup = false;
 	float								m_cameraSpeed = 0.3f; 
 
-	CarController*						m_carController = nullptr;
-	CarController*						m_player2CarController = nullptr;
+	//CarController*						m_carController = nullptr;
+	//CarController*						m_player2CarController = nullptr;
 
-	float								m_anotherTestTempHackStackZ = 20.f;	//20 is good I guess?
+	//float								m_anotherTestTempHackStackZ = 20.f;	//20 is good I guess?
+
+	int									m_numConnectedPlayers = 0;
+
+	Car									m_cars[4];
+	Vec3								m_startPositions[4] = { 
+											Vec3(15.f, 10.f, 0.f),
+											Vec3(15.f, 10.f, -10.f), 
+											Vec3(15.f, 10.f, -20.f), 
+											Vec3(15.f, 10.f, -30.f) };
+
 public:
 	
 	TextureView*						m_textureTest = nullptr;
@@ -150,10 +166,10 @@ public:
 	std::string							m_sphereTexturePath = "2k_earth_daymap.jpg";
 	
 	//Shader Paths
-	std::string							m_shaderLitPath = "default_lit.hlsl";
+	std::string							m_litShaderPath = "default_lit.hlsl";
 	std::string							m_defaultShaderPath = "default_unlit.00.hlsl";
 	std::string							m_normalColorShader = "normal_shader.hlsl";
-	std::string							m_xmlShaderPath = "default_unlit.xml";
+	std::string							m_unlitShaderPath = "default_unlit.xml";
 	
 	//Material Paths
 	std::string							m_couchMaterialPath = "couch.mat";
@@ -227,7 +243,7 @@ public:
 	float								m_ambientIntensity = 1.f;
 	float								m_ambientStep = 0.1f;
 
-	bool								m_enableDirectional = false;
+	bool								m_enableDirectional = true;
 	bool								m_normalMode = false;
 
 	Vec3								m_directionalLightPos;
@@ -284,8 +300,8 @@ public:
 	//------------------------------------------------------------------------------------------------------------------------------
 	//Car Camera and other game data
 	//------------------------------------------------------------------------------------------------------------------------------
-	CarCamera*							m_carCamera = nullptr;
-	CarCamera*							m_player2CarCamera = nullptr;
+	//CarCamera*							m_carCamera = nullptr;
+	//CarCamera*							m_player2CarCamera = nullptr;
 
 	float								m_frameZoomDelta = 0.f;
 	Vec3								m_carStartPosition = Vec3(0.f, 10.f, 0.f);
@@ -299,4 +315,8 @@ public:
 	
 	bool								m_debugRenderWaypoints = false;
 
+	//------------------------------------------------------------------------------------------------------------------------------
+	// Split Screen System
+	//------------------------------------------------------------------------------------------------------------------------------
+	SplitScreenSystem					m_splitScreenSystem;
 };

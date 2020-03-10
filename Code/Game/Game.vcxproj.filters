@@ -43,6 +43,9 @@
     <ClCompile Include="SplitScreenSystem.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
+    <ClCompile Include="Car.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entity.hpp">
@@ -69,5 +72,6 @@
     <ClInclude Include="WaypointTriggerBased.hpp" />
     <ClInclude Include="WaypointRegionBased.hpp" />
     <ClInclude Include="SplitScreenSystem.hpp" />
+    <ClInclude Include="Car.hpp" />
   </ItemGroup>
 </Project>

@@ -9,6 +9,7 @@
 #include "Engine/Core/Time.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Core/WindowContext.hpp"
+#include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/MathUtils.hpp"
@@ -58,7 +59,6 @@ Game::~Game()
 void Game::StartUp()
 {
 	SetupMouseData();
-	SetupCameras();
 
 	GetandSetShaders();
 	LoadGameTextures();
@@ -73,12 +73,25 @@ void Game::StartUp()
 	DebugRenderOptionsT options;
 	options.space = DEBUG_RENDER_SCREEN;
 
-	m_carController = new CarController();
-	m_carController->SetVehiclePosition(m_carStartPosition);
+	//Call InputSystem frame to detect xBox controllers
+	g_inputSystem->BeginFrame();
+	m_numConnectedPlayers = g_inputSystem->GetNumConnectedControllers();
+	g_inputSystem->EndFrame();
 
-	m_player2CarController = new CarController();
-	m_player2CarController->SetControllerIDToUse(1);
-	m_player2CarController->SetVehiclePosition(m_p2CarStartPosition);
+	//Setup the cars
+	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
+	{
+		m_cars[carIndex].StartUp(m_startPositions[carIndex], carIndex);
+	}
+	
+	SetupCameras();
+
+	//m_carController = new CarController();
+	//m_carController->SetVehiclePosition(m_carStartPosition);
+
+	//m_player2CarController = new CarController();
+	//m_player2CarController->SetControllerIDToUse(1);
+	//m_player2CarController->SetVehiclePosition(m_p2CarStartPosition);
 
 	PxPhysics* physX = g_PxPhysXSystem->GetPhysXSDK();
 	PxScene* pxScene = g_PxPhysXSystem->GetPhysXScene();
@@ -87,11 +100,26 @@ void Game::StartUp()
 	pxMat = g_PxPhysXSystem->GetDefaultPxMaterial();
 
 	//Add things to your scene
-	PxRigidStatic* groundPlane = PxCreatePlane(*physX, PxPlane(0, 1, 0, -10), *pxMat);
-	pxScene->addActor(*groundPlane);
+	//PxRigidStatic* groundPlane = PxCreatePlane(*physX, PxPlane(0, 1, 0, -10), *pxMat);
+	//pxScene->addActor(*groundPlane);
+
+	const float boxHalfHeight = 0.05f;
+	const float boxXZ = 1000.0f;
+	PxTransform t(PxVec3(0.f, boxHalfHeight, 0.f), PxQuat(PxIdentity));
+	PxRigidStatic* rs = physX->createRigidStatic(t);
+
+	PxBoxGeometry boxGeom(PxVec3(boxXZ, boxHalfHeight, boxXZ));
+	PxShape* shape = PxRigidActorExt::createExclusiveShape(*rs, boxGeom, *pxMat);
+
+	PxFilterData simFilterData(COLLISION_FLAG_OBSTACLE, COLLISION_FLAG_WHEEL, PxPairFlag::eMODIFY_CONTACTS | PxPairFlag::eDETECT_CCD_CONTACT, 0);
+	shape->setSimulationFilterData(simFilterData);
+	PxFilterData qryFilterData;
+	setupDrivableSurface(qryFilterData);
+	shape->setQueryFilterData(qryFilterData);
+
+	pxScene->addActor(*rs);
 
 	SetupPhysX();
-
 
 	Vec3 camEuler = Vec3(-12.5f, -196.f, 0.f);
 	m_mainCamera->SetEuler(camEuler);
@@ -132,15 +160,25 @@ void Game::SetupCameras()
 
 	TODO("Change this to use the split screen system instead");
 
-	//CarCamera
-	m_carCamera = new CarCamera();
-	m_carCamera->SetColorTarget(nullptr);
-	m_carCamera->SetPerspectiveProjection(m_camFOVDegrees, 0.1f, 100.0f, aspect);
+// 	CarCamera
+// 		m_carCamera = new CarCamera();
+// 		m_carCamera->SetColorTarget(nullptr);
+// 		m_carCamera->SetPerspectiveProjection(m_camFOVDegrees, 0.1f, 100.0f, aspect);
+// 	
+// 		//P2 car camera
+// 		m_player2CarCamera = new CarCamera();
+// 		m_player2CarCamera->SetColorTarget(nullptr);
+// 		m_player2CarCamera->SetPerspectiveProjection(m_camFOVDegrees, 0.1f, 100.0f, aspect);
 
-	//P2 car camera
-	m_player2CarCamera = new CarCamera();
-	m_player2CarCamera->SetColorTarget(nullptr);
-	m_player2CarCamera->SetPerspectiveProjection(m_camFOVDegrees, 0.1f, 100.0f, aspect);
+	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
+	{
+		m_cars[carIndex].SetCameraColorTarget(nullptr);
+		m_cars[carIndex].SetCameraPerspectiveProjection(m_camFOVDegrees, 0.1f, 1000.f, aspect);
+
+		m_splitScreenSystem.AddCarCameraForPlayer(m_cars[carIndex].GetCarCameraEditable(), m_cars[carIndex].GetCarIndex());
+	}
+
+	//m_splitScreenSystem.AddCarCameraForPlayer();
 
 	m_clearScreenColor = new Rgba(0.f, 0.f, 0.5f, 1.f);
 }
@@ -334,6 +372,17 @@ void Game::SetupPhysX()
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+void Game::SetupSplitScreenSystem()
+{
+	//Check number of players in the game
+	int numConnectedPlayers = g_inputSystem->GetNumConnectedControllers();
+
+	m_splitScreenSystem.SetNumPlayers(numConnectedPlayers);
+	m_splitScreenSystem.ComputeSplits();
+
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 void Game::CreatePhysXVehicleBoxWall()
 {
 	//Add a wall made of dynamic objects with cuboid shapes for bricks.
@@ -469,7 +518,7 @@ void Game::CreatePhysXVehicleObstacles()
 //------------------------------------------------------------------------------------------------------------------------------
 physx::PxRigidActor* Game::GetCarActor() const
 {
-	return m_carController->GetVehicle()->getRigidDynamicActor();
+	return m_cars[0].GetCarRigidbody();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -666,9 +715,6 @@ void Game::Shutdown()
 	delete m_devConsoleCamera;
 	m_devConsoleCamera = nullptr;
 
-	delete m_carCamera;
-	m_carCamera = nullptr;
-
 	delete m_cube;
 	m_cube = nullptr;
 
@@ -752,60 +798,94 @@ void Game::Render() const
 	m_mainCamera->SetColorTarget(colorTargetView);
 	m_mainCamera->SetViewport(Vec2(0.5f, 0.f), Vec2::ONE);
 	m_devConsoleCamera->SetColorTarget(colorTargetView);
-	m_carCamera->SetColorTarget(colorTargetView);
-	m_carCamera->SetViewport(Vec2::ZERO, Vec2(0.5f, 1.f));
 
-	m_player2CarCamera->SetColorTarget(colorTargetView);
-	m_player2CarCamera->SetViewport(Vec2(0.5f, 0.f), Vec2::ONE);
+	m_splitScreenSystem.SetColorTargets(colorTargetView);
+	m_splitScreenSystem.ComputeSplits();
+
+// 	m_carCamera->SetColorTarget(colorTargetView);
+// 	m_carCamera->SetViewport(Vec2::ZERO, Vec2(0.5f, 1.f));
+// 
+// 	m_player2CarCamera->SetColorTarget(colorTargetView);
+// 	m_player2CarCamera->SetViewport(Vec2(0.5f, 0.f), Vec2::ONE);
 
 	// Move the camera to where it is in the scene
 	Matrix44 camTransform = Matrix44::MakeFromEuler( m_mainCamera->GetEuler(), m_rotationOrder ); 
 	camTransform = Matrix44::SetTranslation3D(m_camPosition, camTransform);
 	m_mainCamera->SetModelMatrix(camTransform);
 	
-	if (ui_swapToMainCamera)
-	{
-		//For regular PhysX camera
-		g_renderContext->BeginCamera(*m_mainCamera); 
-	}
-	else
-	{
-		//For Car Camera view
-		g_renderContext->BeginCamera(*m_carCamera);
-	}
-
-	g_renderContext->ClearColorTargets(Rgba(ui_cameraClearColor[0], ui_cameraClearColor[1], ui_cameraClearColor[2], 1.f));
-
+	//g_renderContext->ClearColorTargets(Rgba(ui_cameraClearColor[0], ui_cameraClearColor[1], ui_cameraClearColor[2], 1.f));
+	
 	float intensity = Clamp(m_ambientIntensity, 0.f, 1.f);
-	g_renderContext->SetAmbientLight( Rgba::WHITE, intensity ); 
+	g_renderContext->SetAmbientLight(Rgba::WHITE, intensity);
 
 	float emissive = Clamp(m_emissiveFactor, 0.1f, 1.f);
 	g_renderContext->m_cpuLightBuffer.emissiveFactor = emissive;
 
 	// enable a point light as some position in the world with a normal quadratic falloff; 
-	if(!m_enableDirectional)
+	if (!m_enableDirectional)
 	{
 		g_renderContext->DisableDirectionalLight();
 	}
-	else 
+	else
 	{
 		g_renderContext->EnableDirectionalLight();
 	}
 
+	if (ui_swapToMainCamera)
+	{
+		//For regular PhysX camera
+		g_renderContext->BeginCamera(*m_mainCamera); 
+
+		RenderRacetrack();
+
+		//Render the Quad
+		g_renderContext->BindMaterial(m_defaultMaterial);
+		g_renderContext->BindTextureViewWithSampler(0U, nullptr);
+		g_renderContext->SetModelMatrix(m_baseQuadTransform);
+		g_renderContext->DrawMesh(m_baseQuad);
+
+
+		for (int renderCarIndex = 0; renderCarIndex < m_numConnectedPlayers; renderCarIndex++)
+		{
+			RenderPhysXCar(m_cars[renderCarIndex].GetCarController());
+		}
+
+		g_renderContext->EndCamera();
+	}
+	else
+	{
+		//For Car Camera view
+		for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
+		{
+			Car* car = const_cast<Car*>(&m_cars[carIndex]);
+			g_renderContext->BeginCamera(*car->GetCarCameraEditable());
+
+			if (carIndex == 0)
+			{
+				//Only clear the color target view the first time
+				g_renderContext->ClearColorTargets(Rgba(ui_cameraClearColor[0], ui_cameraClearColor[1], ui_cameraClearColor[2], 1.f));
+			}
+
+			RenderRacetrack();
+
+			//Render the Quad
+			g_renderContext->BindMaterial(m_defaultMaterial);
+			g_renderContext->BindTextureViewWithSampler(0U, nullptr);
+			g_renderContext->SetModelMatrix(m_baseQuadTransform);
+			g_renderContext->DrawMesh(m_baseQuad);
+
+
+			for (int renderCarIndex = 0; renderCarIndex < m_numConnectedPlayers; renderCarIndex++)
+			{
+				RenderPhysXCar(m_cars[renderCarIndex].GetCarController());
+			}
+
+			g_renderContext->EndCamera();
+		}
+
+	}
+
 	//RenderUsingMaterial();
-
-	//Render the Quad
-	g_renderContext->BindMaterial(m_defaultMaterial);
-	g_renderContext->BindTextureViewWithSampler(0U, nullptr);
-	g_renderContext->SetModelMatrix(m_baseQuadTransform);
-	g_renderContext->DrawMesh(m_baseQuad);
-
-	//RenderPhysXScene();
-	RenderRacetrack();
-	
-	//Only for Vehicle SDK
-	RenderPhysXCar(*m_player2CarController);
-	RenderPhysXCar(*m_carController);
 
 	if (m_debugRenderWaypoints)
 	{
@@ -813,29 +893,9 @@ void Game::Render() const
 	}
 	else
 	{
-		RenderWaypointSystem();
+		//RenderWaypointSystem();
 	}
 
-	g_renderContext->EndCamera();	
-
-	//Uncomment to get Debug Rendering to work
-	//DebugRenderToCamera();
-
-	g_renderContext->BeginCamera(*m_player2CarCamera);
-		
-	//Render the Quad
-	g_renderContext->BindMaterial(m_defaultMaterial);
-	g_renderContext->BindTextureViewWithSampler(0U, nullptr);
-	g_renderContext->SetModelMatrix(m_baseQuadTransform);
-	g_renderContext->DrawMesh(m_baseQuad);
-	
-	RenderRacetrack();
-	RenderPhysXCar(*m_carController);
-	RenderPhysXCar(*m_player2CarController);
-	
-	g_renderContext->EndCamera();
-
-	g_renderContext->BindShader(m_shader);
 	
 	if (g_devConsole->IsOpen())
 	{
@@ -1040,6 +1100,7 @@ void Game::RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numAct
 			break;
 			case PxGeometryType::eCONVEXMESH:
 			{
+				/*
 				if (ui_enableConvexHullRenders)
 				{
 					//I don't want to render anything that belongs to the car rigidActor
@@ -1061,6 +1122,7 @@ void Game::RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numAct
 						AddMeshForConvexMesh(cvxMesh, *actors[actorIndex], *shapes[shapeIndex], color);
 					}
 				}
+				*/
 			}
 			break;
 			case PxGeometryType::eCAPSULE:
@@ -1445,19 +1507,19 @@ void Game::Update( float deltaTime )
 
 	HandleMouseInputs(deltaTime);
 	
-	Vec3 vehiclePosition = m_carController->GetVehiclePosition();
-	if (vehiclePosition.y < 0.f)
-	{
-		//Vehicle is falling
-		vehiclePosition.y = 10.f;
-		PxQuat quat;
-		quat.x = 0.f;
-		quat.y = 0.f;
-		quat.z = 0.f;
-		quat.w = 0.f;
-
-		m_carController->SetVehicleTransform(vehiclePosition, quat);
-	}
+// 	Vec3 vehiclePosition = m_carController->GetVehiclePosition();
+// 	if (vehiclePosition.y < 0.f)
+// 	{
+// 		//Vehicle is falling
+// 		vehiclePosition.y = 10.f;
+// 		PxQuat quat;
+// 		quat.x = 0.f;
+// 		quat.y = 0.f;
+// 		quat.z = 0.f;
+// 		quat.w = 0.f;
+// 
+// 		m_carController->SetVehicleTransform(vehiclePosition, quat);
+// 	}
 
 	if(g_devConsole->GetFrameCount() > 1 && !m_devConsoleSetup)
 	{
@@ -1485,11 +1547,14 @@ void Game::Update( float deltaTime )
 	m_trackTestTransform = Matrix44::SetTranslation3D(m_trackTestTranslation, m_trackTestTransform);
 
 	UpdateImGUI();
-	m_carController->Update(deltaTime);
-	m_player2CarController->Update(deltaTime);
+
+	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
+	{
+		m_cars[carIndex].Update(deltaTime);
+	}
 
 	//Update the waypoint system
-	m_waypointSystem.Update(m_carController->GetVehiclePosition());
+	m_waypointSystem.Update(m_cars[0].GetCarController().GetVehiclePosition());
 
 	gProfiler->ProfilerPop();
 }
@@ -1504,26 +1569,23 @@ void Game::FixedUpdate(float deltaTime)
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::UpdatePhysXCar(float deltaTime)
 {
-	m_carController->FixedUpdate(deltaTime);
-	m_player2CarController->FixedUpdate(deltaTime);
+	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
+	{
+		m_cars[carIndex].FixedUpdate(deltaTime);
+	}
+
+// 	m_carController->FixedUpdate(deltaTime);
+// 	m_player2CarController->FixedUpdate(deltaTime);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::UpdateCarCamera(float deltaTime)
 {
 	//Listen to forseth
-	//Try and make a smooth follow camera similar to how our RTS camera works but with smooth step
-	Vec3 carPos =  m_carController->GetVehiclePosition();
-	m_carCamera->SetFocalPoint(carPos);
-	//m_carCamera->SetZoomDelta(m_frameZoomDelta);
-
-	Vec3 car2Pos = m_player2CarController->GetVehiclePosition();
-	m_player2CarCamera->SetFocalPoint(car2Pos);
-
-	Vec3 carForward = m_carController->GetVehicleForwardBasis();
-
-	m_carCamera->Update(carForward, deltaTime);
-	m_player2CarCamera->Update(m_player2CarController->GetVehicleForwardBasis(), deltaTime);
+	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
+	{
+		m_cars[carIndex].UpdateCarCamera(deltaTime);
+	}
 	
 }
 
@@ -1550,11 +1612,11 @@ void Game::UpdateImGUIPhysXWidget()
 	cameraAngleFloat[1] = cameraAngle.y;
 	cameraAngleFloat[2] = cameraAngle.z;
 
-	ui_camAngle = m_carCamera->GetAngleValue();
-	ui_camTilt = m_carCamera->GetTiltValue();
-	ui_camHeight = m_carCamera->GetHeightValue();
-	ui_camDistance = m_carCamera->GetDistanceValue();
-	ui_camLerpSpeed = m_carCamera->GetLerpSpeed();
+// 	ui_camAngle = m_carCamera->GetAngleValue();
+// 	ui_camTilt = m_carCamera->GetTiltValue();
+// 	ui_camHeight = m_carCamera->GetHeightValue();
+// 	ui_camDistance = m_carCamera->GetDistanceValue();
+// 	ui_camLerpSpeed = m_carCamera->GetLerpSpeed();
 
 	float vehicleHeightOffset = m_offsetCarBody.y;
 
@@ -1564,11 +1626,11 @@ void Game::UpdateImGUIPhysXWidget()
 	ImGui::DragFloat3("Main Camera Position", ui_camPosition);
 	ImGui::DragFloat3("Main Camera Angle", cameraAngleFloat);
 
-	ImGui::DragFloat("Camera Angle", &ui_camAngle);
-	ImGui::DragFloat("Camera Tilt", &ui_camTilt);
-	ImGui::DragFloat("Camera Height", &ui_camHeight);
-	ImGui::DragFloat("Camera Distance", &ui_camDistance);
-	ImGui::DragFloat("Camera Lerp Speed", &ui_camLerpSpeed);
+// 	ImGui::DragFloat("Camera Angle", &ui_camAngle);
+// 	ImGui::DragFloat("Camera Tilt", &ui_camTilt);
+// 	ImGui::DragFloat("Camera Height", &ui_camHeight);
+// 	ImGui::DragFloat("Camera Distance", &ui_camDistance);
+// 	ImGui::DragFloat("Camera Lerp Speed", &ui_camLerpSpeed);
 	ImGui::DragFloat("Car body height offset", &vehicleHeightOffset);
 
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -1584,11 +1646,11 @@ void Game::UpdateImGUIPhysXWidget()
 
 	m_directionalLightPos.Normalize();
 
-	m_carCamera->SetAngleValue(ui_camAngle);
-	m_carCamera->SetTiltValue(ui_camTilt);
-	m_carCamera->SetHeightValue(ui_camHeight);
-	m_carCamera->SetDistanceValue(ui_camDistance);
-	m_carCamera->SetLerpSpeed(ui_camLerpSpeed);
+// 	m_carCamera->SetAngleValue(ui_camAngle);
+// 	m_carCamera->SetTiltValue(ui_camTilt);
+// 	m_carCamera->SetHeightValue(ui_camHeight);
+// 	m_carCamera->SetDistanceValue(ui_camDistance);
+// 	m_carCamera->SetLerpSpeed(ui_camLerpSpeed);
 
 	m_offsetCarBody.y = vehicleHeightOffset;
 
@@ -1661,21 +1723,18 @@ void Game::LoadGameMaterials()
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::UpdateLightPositions()
 {
-	g_renderContext->EnableDirectionalLight(Vec3::ZERO, m_directionalLightPos);
+	g_renderContext->EnableDirectionalLight(Vec3(1.f, 10.f, 1.f), Vec3(0.f, -1.f, -1.f).GetNormalized());
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::CreateInitialLight()
 {
-	m_directionalLightPos = Vec3(1.f, -1.f, -1.f).GetNormalized();
-	g_renderContext->EnableDirectionalLight(Vec3(1.f, 10.f, 1.f), m_directionalLightPos);
+	g_renderContext->EnableDirectionalLight(Vec3(1.f, 10.f, 1.f), Vec3(0.f, -1.f, -1.f).GetNormalized());
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::CreateInitialMeshes()
 {
-
-	//Meshes for A4
 	CPUMesh mesh;
 	CPUMeshAddQuad(&mesh, AABB2(Vec2(-0.5f, -0.5f), Vec2(0.5f, 0.5f)));
 	m_quad = new GPUMesh(g_renderContext);
@@ -1747,13 +1806,13 @@ void Game::GetandSetShaders()
 	TODO("Revisit this to make sure we have the correct shader we want");
 
 	//Get the Shader
-	m_shader = g_renderContext->CreateOrGetShaderFromFile(m_xmlShaderPath);
+	m_shader = g_renderContext->CreateOrGetShaderFromFile(m_unlitShaderPath);
 	m_shader->SetDepth(eCompareOp::COMPARE_LEQUAL, true);
 
 	m_normalShader = g_renderContext->CreateOrGetShaderFromFile(m_normalColorShader);
 	m_normalShader->SetDepth(eCompareOp::COMPARE_LEQUAL, true);
 
-	m_defaultLit = g_renderContext->CreateOrGetShaderFromFile(m_shaderLitPath);
+	m_defaultLit = g_renderContext->CreateOrGetShaderFromFile(m_litShaderPath);
 	m_defaultLit->SetDepth(eCompareOp::COMPARE_LEQUAL, true);
 }
 
