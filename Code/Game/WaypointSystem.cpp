@@ -47,6 +47,23 @@ uint WaypointSystem::GetCurrentWaypointIndex() const
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+const Vec3& WaypointSystem::GetNextWaypointPosition() const
+{
+	int index = GetNextWaypointIndex();
+	return m_waypointList[index].GetWaypointPosition();
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+Matrix44 WaypointSystem::GetNextWaypointModelMatrix() const
+{
+	Matrix44 modelMatrix = Matrix44::IDENTITY;
+
+	modelMatrix.SetTranslation3D(GetNextWaypointPosition(), modelMatrix);
+
+	return modelMatrix;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 uint WaypointSystem::GetCurrentLapNumber() const
 {
 	return m_lapIndex;
@@ -166,6 +183,8 @@ void WaypointSystem::SetSystemToNextWaypoint()
 	if (m_lapIndex > m_maxLaps)
 	{
 		g_devConsole->PrintString(Rgba::GREEN, "Completed Race");
+
+		TODO("Make a note of the best time here");
 
 		m_lapIndex = m_maxLaps; //Get it back to maxLaps just so that our UI doesn't say lap 4 of 3
 		m_lapsCompleted = true;

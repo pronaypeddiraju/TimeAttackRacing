@@ -28,6 +28,9 @@ void Car::StartUp(const Vec3& startPosition, int controllerID)
 void Car::Update(float deltaTime)
 {
 	m_controller->Update(deltaTime);
+
+	//Update the waypoint system
+	m_waypoints.Update(m_controller->GetVehiclePosition());
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -64,6 +67,18 @@ int Car::GetCarIndex() const
 physx::PxRigidDynamic* Car::GetCarRigidbody() const
 {
 	return m_controller->GetVehicle()->getRigidDynamicActor();
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+WaypointSystem& Car::GetWaypointsEditable()
+{
+	return m_waypoints;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+const WaypointSystem& Car::GetWaypoints() const
+{
+	return m_waypoints;
 }
 
 void Car::SetCameraColorTarget(ColorTargetView* colorTargetView)

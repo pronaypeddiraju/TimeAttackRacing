@@ -15,6 +15,8 @@ public:
 	void					AddNewWayPoint(const Vec3& waypointPosition, const Vec3& waypointHalfExtents, uint waypointIndex);
 	uint					GetNextWaypointIndex() const;
 	uint					GetCurrentWaypointIndex() const;
+	const Vec3&				GetNextWaypointPosition() const;
+	Matrix44				GetNextWaypointModelMatrix() const;
 
 	uint					GetCurrentLapNumber() const;
 	uint					GetMaxLapCount() const;

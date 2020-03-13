@@ -20,6 +20,8 @@ public:
 	void				AssignWaypointNumber(uint numberToAssign);
 	uint				GetWaypointNumber() const;
 
+	const Vec3&			GetWaypointPosition() const;
+
 private:
 	uint		m_waypointIndex = UINT_MAX;
 

@@ -293,9 +293,17 @@ public:
 
 	bool								m_debugViewCarCollider = false;
 
-	Vec3								m_wayPointPosition = Vec3(15.f, 0.f, 10.f);
-	Vec3								m_wayPointHalfExtents = Vec3(5.f, 5.f, 1.f);
-	WaypointRegionBased					m_wayPointRegionBased;
+	Vec3								m_wayPointPositions[5] = { Vec3(15.f, 0.f, 10.f),
+																	Vec3(40.f, 0.f, 85.f),
+																	Vec3(-35.f, 0.f, 65.f), 
+																	Vec3(-25.f, 0.f, -50.f), 
+																	Vec3(35.f, 0.f, -75.f) };
+
+	Vec3								m_wayPointHalfExtents[5] = { Vec3(5.f, 5.f, 1.f),
+																	Vec3(1.f, 5.f, 5.f),
+																	Vec3(5.f, 5.f, 1.f),
+																	Vec3(5.f, 5.f, 1.f),
+																	Vec3(5.f, 5.f, 1.f) };
 
 	//------------------------------------------------------------------------------------------------------------------------------
 	//Car Camera and other game data
@@ -304,14 +312,12 @@ public:
 	//CarCamera*							m_player2CarCamera = nullptr;
 
 	float								m_frameZoomDelta = 0.f;
-	Vec3								m_carStartPosition = Vec3(0.f, 10.f, 0.f);
-	Vec3								m_p2CarStartPosition = Vec3(0.f, 10.f, 20.f);
-
+	
 	//------------------------------------------------------------------------------------------------------------------------------
 	// Waypoint System
 	//------------------------------------------------------------------------------------------------------------------------------
-	WaypointSystem						m_waypointSystem;
-	WaypointSystem						m_wayPointSystemP2;
+	//WaypointSystem						m_waypointSystem;
+	//WaypointSystem						m_wayPointSystemP2;
 	
 	bool								m_debugRenderWaypoints = false;
 

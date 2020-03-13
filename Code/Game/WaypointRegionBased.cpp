@@ -60,6 +60,12 @@ uint WaypointRegionBased::GetWaypointNumber() const
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+const Vec3& WaypointRegionBased::GetWaypointPosition() const
+{
+	return m_position;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 WaypointRegionBased::~WaypointRegionBased()
 {
 
