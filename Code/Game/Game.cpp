@@ -58,6 +58,12 @@ Game::~Game()
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
+	//Test audio here
+	//std::string path = "Data/Audio/UproarLilWayne.mp3";
+	//SoundID soundID = g_audio->CreateOrGetSound(path);
+	//SoundPlaybackID playbackID = g_audio->PlayAudio(soundID);
+	//g_audio->SetSoundPlaybackVolume(playbackID, 0.1f);
+
 	SetupMouseData();
 
 	GetandSetShaders();
@@ -1755,8 +1761,6 @@ void Game::LoadGameTextures()
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::GetandSetShaders()
 {
-	TODO("Revisit this to make sure we have the correct shader we want");
-
 	//Get the Shader
 	m_shader = g_renderContext->CreateOrGetShaderFromFile(m_unlitShaderPath);
 	m_shader->SetDepth(eCompareOp::COMPARE_LEQUAL, true);

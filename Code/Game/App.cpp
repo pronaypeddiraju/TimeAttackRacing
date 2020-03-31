@@ -64,14 +64,14 @@ void App::StartUp()
 {
 	LoadGameBlackBoard();
 
+	g_audio = new AudioSystem();
+
 	g_eventSystem = new EventSystems();
 
 	//This is now being set in Main_Windows.cpp
 	//g_renderContext = new RenderContext(m_appWindowHandle);
 	
 	g_inputSystem = new InputSystem();
-
-	g_audio = new AudioSystem();
 
 	g_devConsole = new DevConsole();
 	g_devConsole->Startup();
