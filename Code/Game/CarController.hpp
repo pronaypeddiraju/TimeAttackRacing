@@ -7,27 +7,30 @@ public:
 	CarController();
 	~CarController();
 
-	void	SetupVehicle();
-	void	SetDigitalControlMode(bool digitalControlEnabled);
-
-	bool	IsDigitalInputEnabled() const;
-
-	void	Update(float deltaTime);
-	void	FixedUpdate(float deltaTime);
-	void	UpdateInputs();
-	void	VehiclePhysicsUpdate(float deltaTime);
-
-	void	SetControllerIDToUse(int controllerID);
+	void						HandleKeyPressed(unsigned char keyCode);
+	void						HandleKeyReleased(unsigned char keyCode);
+								
+	void						SetupVehicle();
+	void						SetDigitalControlMode(bool digitalControlEnabled);
+								
+	bool						IsDigitalInputEnabled() const;
+								
+	void						Update(float deltaTime);
+	void						FixedUpdate(float deltaTime);
+	void						UpdateInputs();
+	void						VehiclePhysicsUpdate(float deltaTime);
+								
+	void						SetControllerIDToUse(int controllerID);
 
 	//Vehicle Setter
-	void	SetVehiclePosition(const Vec3& targetPosition);
-	void	SetVehicleTransform(const Vec3& targetPosition, const PxQuat& quaternion);
+	void						SetVehiclePosition(const Vec3& targetPosition);
+	void						SetVehicleTransform(const Vec3& targetPosition, const PxQuat& quaternion);
 
 	//Vehicle Getters
-	PxVehicleDrive4W* GetVehicle() const;
+	PxVehicleDrive4W*			GetVehicle() const;
 	PxVehicleDrive4WRawInputData* GetVehicleInputData() const;
-	Vec3	GetVehiclePosition() const;
-	Vec3	GetVehicleForwardBasis() const;
+	Vec3						GetVehiclePosition() const;
+	Vec3						GetVehicleForwardBasis() const;
 
 	//Vehicle Controls
 	void	AccelerateForward(float analogAcc = 0.f);

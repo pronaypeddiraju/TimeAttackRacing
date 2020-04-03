@@ -35,6 +35,55 @@ CarController::~CarController()
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+void CarController::HandleKeyPressed(unsigned char keyCode)
+{
+	return;
+
+	//ReleaseAllControls();
+
+	switch (keyCode)
+	{
+		case UP_ARROW:
+		case W_KEY:
+		{
+			AccelerateForward(1.f);
+			break;
+		}		
+		case DOWN_ARROW:
+		case S_KEY:
+		{
+			AccelerateReverse(1.f);
+			break;
+		}
+		case RIGHT_ARROW:
+		case D_KEY:
+		{
+			Steer(1.f);
+			break;
+		}
+		case LEFT_ARROW:
+		case A_KEY:
+		{
+			Steer(-1.f);
+			break;
+		}
+		case SPACE_KEY:
+		{
+			Brake();
+			break;
+		}
+		case LCTRL_KEY:
+		{
+			Handbrake();
+			break;
+		}
+		default:
+			DebuggerPrintf("\n Controller Default");
+			break;
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 void CarController::SetupVehicle()
 {
 	m_vehicle4W = g_PxPhysXSystem->StartUpVehicleSDK();

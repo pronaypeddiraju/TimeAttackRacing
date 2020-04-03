@@ -82,6 +82,25 @@ void WaypointSystem::SetMaxLapCount(uint maxLapCount)
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+double WaypointSystem::GetTotalTime()
+{
+	if (m_lapsCompleted)
+	{
+		return m_timeStamps[m_timeStamps.size() - 1];
+	}
+	else
+	{
+		return GetAccumulatedLapTimes();
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+bool WaypointSystem::AreLapsComplete()
+{
+	return m_lapsCompleted;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 void WaypointSystem::Startup()
 {
 	m_startTime = GetCurrentTimeSeconds();
@@ -91,7 +110,10 @@ void WaypointSystem::Startup()
 void WaypointSystem::Update(const Vec3& carPosition)
 {
 	if (m_lapsCompleted)
+	{
+		//Do something here to display that the time is complete?
 		return;
+	}
 
 	std::vector<WaypointRegionBased>::iterator waypointItr;
 	waypointItr = m_waypointList.begin();
@@ -183,8 +205,6 @@ void WaypointSystem::SetSystemToNextWaypoint()
 	if (m_lapIndex > m_maxLaps)
 	{
 		g_devConsole->PrintString(Rgba::GREEN, "Completed Race");
-
-		TODO("Make a note of the best time here");
 
 		m_lapIndex = m_maxLaps; //Get it back to maxLaps just so that our UI doesn't say lap 4 of 3
 		m_lapsCompleted = true;

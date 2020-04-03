@@ -16,15 +16,21 @@ Car::~Car()
 void Car::StartUp(const Vec3& startPosition, int controllerID)
 {
 	m_camera = new CarCamera();
+	m_carHUD = new Camera();
 	m_controller = new CarController();
 	m_audio = new CarAudio(m_controller);
+	m_audio->Startup();
 
 	m_controller->SetVehiclePosition(startPosition);
 	m_controller->SetControllerIDToUse(controllerID);
 
 	m_carIndex = controllerID;
 
-	SetupCarAudio();
+	m_carHUD->SetColorTarget(nullptr);
+
+	Vec2 orthoBottomLeft = Vec2(0.f, 0.f);
+	Vec2 orthoTopRight = Vec2(m_HUD_WIDTH, m_HUD_HEIGHT);
+	m_carHUD->SetOrthoView(orthoBottomLeft, orthoTopRight);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -35,21 +41,28 @@ void Car::Update(float deltaTime)
 
 	//Update the waypoint system
 	m_waypoints.Update(m_controller->GetVehiclePosition());
-
-	
-// 	float radiansPerSecond = m_controller->GetVehicle()->mDriveDynData.getEngineRotationSpeed() * 60 * 0.5f / PxPi;
-// 	float maxRadsPerSecond = m_controller->GetVehicle()->mDriveSimData.getEngineData().mMaxOmega * 60 * 0.5f / PxPi;
-// 	//float RPM = PhysXSystem::GetRadiansPerSecondToRotationsPerMinute(radiansPerSecond) * (1000.f / maxRadsPerSecond);
-// 	float RPM = radiansPerSecond / maxRadsPerSecond;
-// 	RPM = RPM * m_controller->GetVehicle()->mDriveDynData.getCurrentGear();
-// 
-// 	DebuggerPrintf("\n %f", RPM * 100.f);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
 void Car::FixedUpdate(float fixedTime)
 {
 	m_controller->FixedUpdate(fixedTime);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Car::Shutdown()
+{
+	delete m_camera;
+	m_camera = nullptr;
+
+	delete m_carHUD;
+	m_carHUD = nullptr;
+
+	delete m_controller;
+	m_controller = nullptr;
+
+	delete m_audio;
+	m_audio = nullptr;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -68,6 +81,24 @@ CarCamera* Car::GetCarCameraEditable()
 const CarController& Car::GetCarController() const
 {
 	return *m_controller;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+CarController* Car::GetCarControllerEditable()
+{
+	return m_controller;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+const CarAudio& Car::GetCarAudio() const
+{
+	return *m_audio;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+CarAudio* Car::GetCarAudioEditable()
+{
+	return m_audio;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -94,6 +125,12 @@ const WaypointSystem& Car::GetWaypoints() const
 	return m_waypoints;
 }
 
+//------------------------------------------------------------------------------------------------------------------------------
+void Car::SetupNewPlaybackIDs()
+{
+	m_audio->SetNewPlaybackIDs();
+}
+
 void Car::SetCameraColorTarget(ColorTargetView* colorTargetView)
 {
 	m_camera->SetColorTarget(colorTargetView);
@@ -117,9 +154,12 @@ void Car::UpdateCarCamera(float deltaTime)
 //------------------------------------------------------------------------------------------------------------------------------
 void Car::SetupCarAudio()
 {
-	for (int index = 0; index < CAR_FILE_PATHS.size(); index++)
+	if (m_carIndex == 0)
 	{
-		CAR_FILE_PATHS[index] = m_BASE_AUDIO_PATH + CAR_FILE_PATHS[index];
+		for (int index = 0; index < CAR_FILE_PATHS.size(); index++)
+		{
+			CAR_FILE_PATHS[index] = m_BASE_AUDIO_PATH + CAR_FILE_PATHS[index];
+		}
 	}
 
 	m_audio->InitializeFromPaths(CAR_FILE_PATHS);

@@ -75,21 +75,13 @@ void Game::StartUp()
 
 	CreateInitialLight();
 
-	//Only to keep track of what input does what
-	DebugRenderOptionsT options;
-	options.space = DEBUG_RENDER_SCREEN;
-
 	//Call InputSystem frame to detect xBox controllers
 	g_inputSystem->BeginFrame();
 	m_numConnectedPlayers = g_inputSystem->GetNumConnectedControllers();
 	g_inputSystem->EndFrame();
 
-	//Setup the cars
-	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
-	{
-		m_cars[carIndex].StartUp(m_startPositions[carIndex], carIndex);
-	}
-	
+	//Setup the cars	
+	SetupCars();
 	SetupCameras();
 
 	PxPhysics* physX = g_PxPhysXSystem->GetPhysXSDK();
@@ -129,6 +121,27 @@ void Game::StartUp()
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+void Game::SetupCars()
+{
+	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
+	{
+		m_cars[carIndex] = new Car();
+		m_cars[carIndex]->StartUp(m_startPositions[carIndex], carIndex);
+		m_cars[carIndex]->SetupCarAudio();
+
+// 		if (carIndex == 0)
+// 		{
+// 			m_cars[carIndex].SetupCarAudio();
+// 		}
+// 		else
+// 		{
+// 			CopyAudioIDsFromFirstCar(carIndex);
+// 			m_cars[carIndex].SetupNewPlaybackIDs();
+// 		}
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 void Game::SetupMouseData()
 {
 	g_windowContext->SetMouseMode(MOUSE_MODE_RELATIVE);
@@ -155,10 +168,10 @@ void Game::SetupCameras()
 
 	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
 	{
-		m_cars[carIndex].SetCameraColorTarget(nullptr);
-		m_cars[carIndex].SetCameraPerspectiveProjection(m_camFOVDegrees, 0.1f, 1000.f, aspect);
+		m_cars[carIndex]->SetCameraColorTarget(nullptr);
+		m_cars[carIndex]->SetCameraPerspectiveProjection(m_camFOVDegrees, 0.1f, 1000.f, aspect);
 
-		m_splitScreenSystem.AddCarCameraForPlayer(m_cars[carIndex].GetCarCameraEditable(), m_cars[carIndex].GetCarIndex());
+		m_splitScreenSystem.AddCarCameraForPlayer(m_cars[carIndex]->GetCarCameraEditable(), m_cars[carIndex]->GetCarIndex());
 	}
 
 	m_clearScreenColor = new Rgba(0.f, 0.f, 0.5f, 1.f);
@@ -353,14 +366,14 @@ void Game::SetupPhysX()
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-void Game::SetupSplitScreenSystem()
+void Game::CopyAudioIDsFromFirstCar(int carIndex)
 {
-	//Check number of players in the game
-	int numConnectedPlayers = g_inputSystem->GetNumConnectedControllers();
+	m_cars[carIndex]->GetCarAudioEditable()->SetSimplexSoundID(m_cars[0]->GetCarAudio().GetSimplexSoundID());
+	m_cars[carIndex]->GetCarAudioEditable()->SetSimplexSoundPlaybackID(m_cars[0]->GetCarAudio().GetSimplexSoundPlaybackID());
 
-	m_splitScreenSystem.SetNumPlayers(numConnectedPlayers);
-	m_splitScreenSystem.ComputeSplits();
-
+	int size = 0;
+	m_cars[carIndex]->GetCarAudioEditable()->SetSoundIDs(m_cars[0]->GetCarAudio().GetSoundIDs(size), size);
+	m_cars[carIndex]->GetCarAudioEditable()->SetSoundPlaybackIDs(m_cars[0]->GetCarAudio().GetSoundPlaybackIDs(size), size);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -499,7 +512,7 @@ void Game::CreatePhysXVehicleObstacles()
 //------------------------------------------------------------------------------------------------------------------------------
 physx::PxRigidActor* Game::GetCarActor() const
 {
-	return m_cars[0].GetCarRigidbody();
+	return m_cars[0]->GetCarRigidbody();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -556,6 +569,13 @@ void Game::HandleKeyPressed(unsigned char keyCode)
 		g_devConsole->HandleKeyDown(keyCode);
 		return;
 	}
+
+	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
+	{
+		m_cars[carIndex]->GetCarControllerEditable()->HandleKeyPressed(keyCode);
+	}
+
+	return;
 
 	switch( keyCode )
 	{
@@ -690,26 +710,25 @@ void Game::Shutdown()
 {
 	//m_carController->ReleaseVehicle();
 
+	for (int i = 0; i < m_numConnectedPlayers; i++)
+	{
+		m_cars[i]->Shutdown();
+		delete m_cars[i];
+		m_cars[i] = nullptr;
+	}
+
+	delete m_UICamera;
+	m_UICamera = nullptr;
+
 	delete m_mainCamera;
 	m_mainCamera = nullptr;
 
 	delete m_devConsoleCamera;
 	m_devConsoleCamera = nullptr;
 
-	delete m_cube;
-	m_cube = nullptr;
-
-	delete m_sphere;
-	m_sphere = nullptr;
-
-	delete m_quad;
-	m_quad = nullptr;
-
+	TODO("DEBUG: m_baseQuad causes a memory leak");
 	delete m_baseQuad;
 	m_baseQuad = nullptr;
-
-	delete m_capsule;
-	m_capsule = nullptr;
 
 	delete m_pxCube;
 	m_pxCube = nullptr;
@@ -722,6 +741,19 @@ void Game::Shutdown()
 
 	delete m_pxCapMesh;
 	m_pxCapMesh = nullptr;
+
+// 	delete m_carModel;
+// 	m_carModel = nullptr;
+// 
+// 	delete m_wheelModel;
+// 	m_wheelModel = nullptr;
+// 
+// 	delete m_wheelFlippedModel;
+// 	m_wheelFlippedModel = nullptr;
+// 
+// 	delete m_trackPieceModel;
+// 	m_trackPieceModel = nullptr;
+
 	//FreeResources();
 }
 
@@ -819,7 +851,7 @@ void Game::Render() const
 
 		for (int renderCarIndex = 0; renderCarIndex < m_numConnectedPlayers; renderCarIndex++)
 		{
-			RenderPhysXCar(m_cars[renderCarIndex].GetCarController());
+			RenderPhysXCar(m_cars[renderCarIndex]->GetCarController());
 		}
 
 		g_renderContext->EndCamera();
@@ -829,7 +861,7 @@ void Game::Render() const
 		//For Car Camera view
 		for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
 		{
-			Car* car = const_cast<Car*>(&m_cars[carIndex]);
+			Car* car = const_cast<Car*>(m_cars[carIndex]);
 			g_renderContext->BeginCamera(*car->GetCarCameraEditable());
 
 			if (carIndex == 0)
@@ -848,12 +880,14 @@ void Game::Render() const
 
 			//g_renderContext->SetModelMatrix(m_cars[carIndex].GetWaypoints().GetNextWaypointModelMatrix());
 			g_renderContext->SetModelMatrix(Matrix44::IDENTITY);
-			m_cars[carIndex].GetWaypoints().RenderNextWaypoint();
+			m_cars[carIndex]->GetWaypoints().RenderNextWaypoint();
 
 			for (int renderCarIndex = 0; renderCarIndex < m_numConnectedPlayers; renderCarIndex++)
 			{
-				RenderPhysXCar(m_cars[renderCarIndex].GetCarController());
+				RenderPhysXCar(m_cars[renderCarIndex]->GetCarController());
 			}
+
+			//RenderGearNumber();
 
 			g_renderContext->EndCamera();
 		}
@@ -895,21 +929,9 @@ void Game::RenderUsingMaterial() const
 {
 	g_renderContext->BindMaterial(m_couchMaterial);
 
-	//Render the cube
-	g_renderContext->SetModelMatrix(m_cubeTransform);
-	g_renderContext->DrawMesh( m_cube ); 
-
-	//Render the sphere
-	g_renderContext->SetModelMatrix( m_sphereTransform ); 
-	g_renderContext->DrawMesh( m_sphere ); 
-
-	//Render the Quad
-	g_renderContext->SetModelMatrix(Matrix44::IDENTITY);
-	g_renderContext->DrawMesh( m_quad );
-
-	//Render the capsule here
-	g_renderContext->SetModelMatrix(m_capsuleModel);
-	g_renderContext->DrawMesh(m_capsule);
+	//Render the base quad
+	g_renderContext->SetModelMatrix(m_baseQuadTransform);
+	g_renderContext->DrawMesh(m_baseQuad);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1501,11 +1523,6 @@ void Game::Update( float deltaTime )
 	camTransform = Matrix44::SetTranslation3D(m_camPosition, camTransform);
 	m_mainCamera->SetModelMatrix(camTransform);
 
-	m_cubeTransform = Matrix44::SetTranslation3D( Vec3(-5.0f, 0.0f, 0.0f), m_cubeTransform);
-	m_sphereTransform = Matrix44::MakeFromEuler( Vec3(0.0f, -45.0f * currentTime, 0.0f) ); 
-	m_sphereTransform = Matrix44::SetTranslation3D( Vec3(5.0f, 0.0f, 0.0f), m_sphereTransform);
-	m_quadTransfrom = Matrix44::SetTranslation3D(Vec3(0.f, 0.f, 0.f), m_quadTransfrom);
-
 	m_racetrackTransform = Matrix44::SetTranslation3D(m_racetrackTranslation, m_racetrackTransform);
 
 	m_trackTestTransform = Matrix44::SetTranslation3D(m_trackTestTranslation, m_trackTestTransform);
@@ -1514,7 +1531,7 @@ void Game::Update( float deltaTime )
 
 	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
 	{
-		m_cars[carIndex].Update(deltaTime);
+		m_cars[carIndex]->Update(deltaTime);
 	}
 
 	gProfiler->ProfilerPop();
@@ -1532,7 +1549,7 @@ void Game::UpdatePhysXCar(float deltaTime)
 {
 	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
 	{
-		m_cars[carIndex].FixedUpdate(deltaTime);
+		m_cars[carIndex]->FixedUpdate(deltaTime);
 	}
 
 // 	m_carController->FixedUpdate(deltaTime);
@@ -1545,7 +1562,7 @@ void Game::UpdateCarCamera(float deltaTime)
 	//Listen to forseth
 	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
 	{
-		m_cars[carIndex].UpdateCarCamera(deltaTime);
+		m_cars[carIndex]->UpdateCarCamera(deltaTime);
 	}
 	
 }
@@ -1625,7 +1642,7 @@ void Game::UpdateImGUIDebugWidget()
 	ImGui::DragFloat3("Track Translation", ui_racetrackTranslation);
 
 	float position[3];
-	Vec3 carPosition = m_cars[0].GetCarController().GetVehiclePosition();
+	Vec3 carPosition = m_cars[0]->GetCarController().GetVehiclePosition();
 	position[0] = carPosition.x;
 	position[1] = carPosition.y;
 	position[2] = carPosition.z;
@@ -1657,11 +1674,24 @@ bool Game::IsAlive()
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+void Game::RenderGearNumber() const
+{
+	//Need to draw the gear indicator here
+	
+	g_renderContext->BindTextureViewWithSampler(0U, m_squirrelFont->GetTexture());
+	g_renderContext->BindShader(m_shader);
+	std::vector<Vertex_PCU> verts;
+	std::string textValue = std::to_string(m_cars[0]->GetCarController().GetVehicle()->mDriveDynData.getCurrentGear());
+	m_squirrelFont->AddVertsForText2D(verts, Vec2(0.f, 100.f), 100.f, textValue.c_str(), Rgba::RED);
+	g_renderContext->DrawVertexArray(verts);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 void Game::CreateWayPoints()
 {
 	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
 	{
-		WaypointSystem& waypoints = m_cars[carIndex].GetWaypointsEditable(); 
+		WaypointSystem& waypoints = m_cars[carIndex]->GetWaypointsEditable(); 
 		waypoints.Startup();
 
 		for (int waypointIndex = 0; waypointIndex < 5; waypointIndex++)
@@ -1693,28 +1723,7 @@ void Game::CreateInitialLight()
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::CreateInitialMeshes()
 {
-	CPUMesh mesh;
-	CPUMeshAddQuad(&mesh, AABB2(Vec2(-0.5f, -0.5f), Vec2(0.5f, 0.5f)));
-	m_quad = new GPUMesh(g_renderContext);
-	m_quad->CreateFromCPUMesh<Vertex_Lit>(&mesh, GPU_MEMORY_USAGE_STATIC);
-
-	mesh.Clear();
-	// create a cube (centered at zero, with sides 1 length)
-	CPUMeshAddCube( &mesh, AABB3( Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f)) ); 
-	
-	m_cube = new GPUMesh( g_renderContext ); 
-	m_cube->CreateFromCPUMesh<Vertex_Lit>( &mesh, GPU_MEMORY_USAGE_STATIC );
-
-
-	// create a sphere, cenetered at zero, with 
-	mesh.Clear();
-	CPUMeshAddUVSphere( &mesh, Vec3::ZERO, 1.0f );  
-	
-	//mesh.SetLayout<Vertex_Lit>();
-	m_sphere = new GPUMesh( g_renderContext ); 
-	m_sphere->CreateFromCPUMesh<Vertex_Lit>( &mesh, GPU_MEMORY_USAGE_STATIC );
-
-	//Create another quad as a base plane
+ 	CPUMesh mesh;
 	mesh.Clear();
 	CPUMeshAddQuad(&mesh, AABB2(Vec2(-1000.f, -1000.f), Vec2(1000.f, 1000.f)), Rgba::ORGANIC_PURPLE);
 
@@ -1725,15 +1734,6 @@ void Game::CreateInitialMeshes()
 	m_baseQuadTransform = Matrix44::IDENTITY;
 	m_baseQuadTransform = Matrix44::MakeFromEuler(Vec3(-90.f, 0.f, 0.f));
 	m_baseQuadTransform = Matrix44::SetTranslation3D(Vec3(0.f, 0.f, 0.f), m_baseQuadTransform);
-
-	mesh.Clear();
-	CPUMeshAddUVCapsule(&mesh, Vec3(0.f, 1.f, 1.f), Vec3(0.f, -1.f, 1.f), 2.f, Rgba::YELLOW);
-
-	m_capsule = new GPUMesh(g_renderContext);
-	m_capsule->CreateFromCPUMesh<Vertex_Lit>(&mesh, GPU_MEMORY_USAGE_STATIC);
-
-	m_capsuleModel = Matrix44::IDENTITY;
-	m_capsuleModel = Matrix44::MakeFromEuler(Vec3(-90.f, 0.f, 0.f));
 
 	m_pxCube = new GPUMesh(g_renderContext);
 	m_pxSphere = new GPUMesh(g_renderContext);

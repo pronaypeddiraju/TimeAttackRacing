@@ -10,9 +10,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Entity.cpp">
-      <Filter>Gameplay</Filter>
-    </ClCompile>
     <ClCompile Include="Game.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
@@ -21,9 +18,6 @@
     </ClCompile>
     <ClCompile Include="Main_Windows.cpp">
       <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="PhysXGame.cpp">
-      <Filter>Gameplay</Filter>
     </ClCompile>
     <ClCompile Include="CarController.cpp">
       <Filter>Gameplay</Filter>
@@ -51,9 +45,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Entity.hpp">
-      <Filter>Gameplay</Filter>
-    </ClInclude>
     <ClInclude Include="Game.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
@@ -64,9 +55,6 @@
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="EngineBuildPreferences.hpp">
-      <Filter>Gameplay</Filter>
-    </ClInclude>
-    <ClInclude Include="PhysXGame.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
     <ClInclude Include="CarController.hpp" />

@@ -12,9 +12,28 @@ public:
 	void			SetAllSoundIDs(const std::vector<SoundID>& soundIDs );
 	void			InitializeFromPaths(const std::vector<std::string>& audioFilePaths);
 
+	void			Startup();
+
 	void			Update();
 
+	//Get Methods
+	const SoundID&			GetSimplexSoundID() const;
+	const SoundPlaybackID&	GetSimplexSoundPlaybackID() const;
+	const SoundID*			GetSoundIDs(int& size) const;
+	const SoundPlaybackID*	GetSoundPlaybackIDs(int& size) const;
+
+	//Set Methods
+	void					SetSimplexSoundID(const SoundID& soundID);
+	void					SetSimplexSoundPlaybackID(const SoundPlaybackID& soundPlaybackID);
+	void					SetSoundIDs(const SoundID* soundID, int size);
+	void					SetSoundPlaybackIDs(const SoundPlaybackID* soundPlaybackIDs, int size);
+
+	void			SetNewPlaybackIDs();
+
 private:
+
+	void			StartupSimplex();
+
 	void			UpdateRPMBased();
 	void			UpdateGearRatioBased();
 	void			UpdateSimplex();
@@ -33,6 +52,16 @@ private:
 
 	CarController*	m_carControllerRef = nullptr;
 	float			m_startFrequency = 0.f;
+
+	SoundID			m_simplexSound;
+	SoundPlaybackID	m_simplexPlaybackID;
+	std::string		m_engineSoundPath = "Data/Audio/Ferrari944/C_9_ExhL_03775.wav";
+	//std::string		m_shiftSound = "Data/Audio/CarEngine.wav";
+	std::string		m_shiftSound = "Data/Audio/Ferrari944/C_5_ExhL_02142.wav";
+
+	SoundID			m_shiftSoundID;
+	SoundPlaybackID	m_shiftPlaybackID;
+	bool			m_playedShift = false;
 
 	float			m_rangeDivider = 2.f;
 	int				m_numFiles = 0;

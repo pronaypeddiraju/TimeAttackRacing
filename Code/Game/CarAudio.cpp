@@ -27,7 +27,6 @@ void CarAudio::SetAllSoundIDs(const std::vector<SoundID>& soundIDs)
 void CarAudio::InitializeFromPaths(const std::vector<std::string>& audioFilePaths)
 {
 	//Load all the audio files in this path and set up their IDs
-	
 	m_numFiles = 16;
 	if ((int)audioFilePaths.size() < m_numFiles)
 		m_numFiles = (int)audioFilePaths.size();
@@ -39,17 +38,108 @@ void CarAudio::InitializeFromPaths(const std::vector<std::string>& audioFilePath
 		m_carSoundIDs[audioIndex] = id;
 
 		m_soundPlaybackIDs[audioIndex] = g_audio->PlayAudio(id, true);
+		g_audio->SetSoundPlaybackVolume(m_soundPlaybackIDs[audioIndex], 0.f);
 	}
+}
 
-	//m_tempPlaybackID = g_audio->PlayAudio(m_carSoundIDs[4], true);
-
-	DebuggerPrintf("\n\n Frequency = %f", m_startFrequency);
+//------------------------------------------------------------------------------------------------------------------------------
+void CarAudio::Startup()
+{
+	StartupSimplex();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
 void CarAudio::Update()
 {
+	//UpdateSimplexMultiTrack();
 	UpdateSimplex();
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+const SoundID& CarAudio::GetSimplexSoundID() const
+{
+	return m_simplexSound;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+const SoundPlaybackID& CarAudio::GetSimplexSoundPlaybackID() const
+{
+	return m_simplexPlaybackID;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+const SoundID* CarAudio::GetSoundIDs(int& size) const
+{
+	size = m_numFiles;
+	return m_carSoundIDs;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+const SoundPlaybackID* CarAudio::GetSoundPlaybackIDs(int& size) const
+{
+	size = m_numFiles;
+	return m_soundPlaybackIDs;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void CarAudio::SetSimplexSoundID(const SoundID& soundID)
+{
+	m_simplexSound = soundID;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void CarAudio::SetSimplexSoundPlaybackID(const SoundPlaybackID& soundPlaybackID)
+{
+	m_simplexPlaybackID = soundPlaybackID;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void CarAudio::SetSoundIDs(const SoundID* soundID, int size)
+{
+	SoundID* thisCarSounds = m_carSoundIDs;
+	for (int i = 0; i < size; i++)
+	{
+		thisCarSounds = const_cast<SoundID*>(soundID);
+		soundID++;
+		thisCarSounds++;
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void CarAudio::SetSoundPlaybackIDs(const SoundPlaybackID* soundPlaybackIDs, int size)
+{
+	SoundPlaybackID* thisCarSoundPlaybacks = m_soundPlaybackIDs;
+	for (int i = 0; i < size; i++)
+	{
+		thisCarSoundPlaybacks = const_cast<SoundPlaybackID*>(soundPlaybackIDs);
+		soundPlaybackIDs++;
+		thisCarSoundPlaybacks++;
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void CarAudio::SetNewPlaybackIDs()
+{
+	for (int audioIndex = 0; audioIndex < m_numFiles; audioIndex++)
+	{
+		m_soundPlaybackIDs[audioIndex] = g_audio->PlayAudio(audioIndex, true);
+		g_audio->SetSoundPlaybackVolume(m_soundPlaybackIDs[audioIndex], 0.f);
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void CarAudio::StartupSimplex()
+{
+	SoundID id = g_audio->CreateOrGetSound(m_engineSoundPath);
+	m_simplexSound = id;
+	m_simplexPlaybackID = g_audio->PlayAudio(m_simplexSound, true);
+	g_audio->SetSoundPlaybackVolume(m_simplexPlaybackID, 0.f);
+
+	m_shiftSoundID = g_audio->CreateOrGetSound(m_shiftSound);
+	m_shiftPlaybackID = g_audio->PlayAudio(m_shiftSoundID, true);
+	g_audio->SetSoundPlaybackVolume(m_shiftPlaybackID, 0.f);
+
+	DebuggerPrintf("\n\n Frequency = %f", m_startFrequency);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -60,11 +150,11 @@ void CarAudio::UpdateRPMBased()
 	float omega = m_carControllerRef->GetVehicle()->mDriveSimData.getEngineData().mMaxOmega;
 	float currentSpeed = m_carControllerRef->GetVehicle()->mDriveDynData.getEngineRotationSpeed();
 
-	//float radiansPerSecond = m_carControllerRef->GetVehicle()->mDriveDynData.getEngineRotationSpeed() * 60 * 0.5f / PxPi;
-	//float maxRadsPerSecond = m_carControllerRef->GetVehicle()->mDriveSimData.getEngineData().mMaxOmega * 60 * 0.5f / PxPi;
-	//float RPM = PhysXSystem::GetRadiansPerSecondToRotationsPerMinute(radiansPerSecond) * (1000.f / maxRadsPerSecond);
+	float radiansPerSecond = m_carControllerRef->GetVehicle()->mDriveDynData.getEngineRotationSpeed() * 60 * 0.5f / PxPi;
+	float maxRadsPerSecond = m_carControllerRef->GetVehicle()->mDriveSimData.getEngineData().mMaxOmega * 60 * 0.5f / PxPi;
+	float RPM = PhysXSystem::GetRadiansPerSecondToRotationsPerMinute(radiansPerSecond) * (1000.f / maxRadsPerSecond);
 	float audioRatio = currentSpeed / currentSpeed * 1000.f;
-	//RPM = RPM * m_carControllerRef->GetVehicle()->mDriveDynData.getCurrentGear();
+	RPM = RPM * m_carControllerRef->GetVehicle()->mDriveDynData.getCurrentGear();
 
 	for (int audioIndex = 0; audioIndex < 14; audioIndex++)
 	{
@@ -112,7 +202,7 @@ void CarAudio::UpdateGearRatioBased()
 	PxVehicleGearsData gearData = vehicleRef->mDriveSimData.getGearsData();
 	int numRatios = gearData.mNbRatios;
 
-	float timeSinceLastSwitch = vehicleRef->mDriveDynData.mGearSwitchTime;
+	//float timeSinceLastSwitch = vehicleRef->mDriveDynData.mGearSwitchTime;
 
 	for (int i = 0; i < numRatios; i++)
 	{
@@ -136,10 +226,9 @@ void CarAudio::UpdateGearRatioBased()
 		}
 
 		float engineSpeed = vehicleRef->mDriveDynData.getEngineRotationSpeed();
-		float enginePitch = (gearMinValue) / (gearMaxValue - gearMinValue);
+		float enginePitch = (engineSpeed - gearMinValue) / (gearMaxValue - gearMinValue);
 		g_audio->SetSoundPlaybackSpeed(m_tempPlaybackID, enginePitch);
 		//DebuggerPrintf("\n Engine Speed: %f", engineSpeed);	//Upto around 1000
-		DebuggerPrintf("\n Pitch : %f", gearMinValue);
 	}
 
 
@@ -156,9 +245,24 @@ void CarAudio::UpdateSimplex()
 	float ratio = currentSpeed / omega;
 	uint currentGear = m_carControllerRef->GetVehicle()->mDriveDynData.getCurrentGear();
 
-	g_audio->SetSoundPlaybackSpeed(m_tempPlaybackID, ratio);
+	if (currentGear != 1)
+	{
+		g_audio->SetSoundPlaybackSpeed(m_simplexPlaybackID, ratio);
+		g_audio->SetSoundPlaybackVolume(m_simplexPlaybackID, 1.f);
+	}
+	else
+	{
+		g_audio->SetSoundPlaybackVolume(m_shiftPlaybackID, 0.1f);
+	}
 
-	//DebuggerPrintf("\n Pitch : %u", currentGear);
+	if (currentGear != m_carControllerRef->GetVehicle()->mDriveDynData.getTargetGear() && !m_playedShift)	
+	{
+		m_playedShift = true;
+		//Play shift sound once
+		g_audio->SetSoundPlaybackVolume(m_shiftPlaybackID, 0.1f);
+		g_audio->SetSoundPlaybackSpeed(m_shiftPlaybackID, 1.f);
+		m_playedShift = false;
+	}
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -172,17 +276,45 @@ void CarAudio::UpdateSimplexMultiTrack()
 
 	for (int i = 0; i < m_numFiles; i++)
 	{
-		m_soundPlaybackIDs[i] = g_audio->PlayAudio(m_carSoundIDs[currentGear], true);
-		if (currentGear == i)
+		if ((int)currentGear == i)
 		{
 			g_audio->SetSoundPlaybackSpeed(m_soundPlaybackIDs[i], ratio);
-			g_audio->SetSoundPlaybackVolume(m_soundPlaybackIDs[i], 1.f);
+			g_audio->SetSoundPlaybackVolume(m_soundPlaybackIDs[i], 0.5f);
+
+			if (i > 1)
+			{
+				//Add some damping for the previous sound track
+				g_audio->SetSoundPlaybackSpeed(m_soundPlaybackIDs[i - 1], 1 - ratio);
+				g_audio->SetSoundPlaybackVolume(m_soundPlaybackIDs[i], 1.f);
+			}
+
+			for (int j = 0; j < m_numFiles; j++)
+			{
+				if (j != i && j != i - 1)
+				{
+					g_audio->SetSoundPlaybackSpeed(m_soundPlaybackIDs[j], 0.f);
+					g_audio->SetSoundPlaybackVolume(m_soundPlaybackIDs[j], 0.f);
+				}
+			}
 		}
-		else
-		{
-			//g_audio->SetSoundPlaybackSpeed(m_soundPlaybackIDs[i], 0.f);
-			g_audio->SetSoundPlaybackVolume(m_soundPlaybackIDs[i], 0.f);
-		}
+// 		else if(currentGear == 0)
+// 		{
+// 			g_audio->SetSoundPlaybackSpeed(m_soundPlaybackIDs[currentGear], ratio);
+// 			g_audio->SetSoundPlaybackVolume(m_soundPlaybackIDs[currentGear], 0.5f);
+// 		}
 	}
+
+	//DebuggerPrintf("\n Current Gear: %u", currentGear);
+
+// 	if (currentGear != m_carControllerRef->GetVehicle()->mDriveDynData.getTargetGear() && !m_playedShift)
+// 	{
+// 		m_playedShift = true;
+// 		//Play shift sound once
+// 		m_shiftPlaybackID = g_audio->PlayAudio(m_shiftSoundID);
+// 		g_audio->SetSoundPlaybackVolume(m_shiftPlaybackID, 0.1f);
+// 		g_audio->SetSoundPlaybackSpeed(m_shiftPlaybackID, 1.f);
+// 		m_playedShift = false;
+// 	}
+
 }
 

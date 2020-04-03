@@ -55,17 +55,8 @@ public:
 	void								FixedUpdate(float deltaTime);
 	void								UpdateImGUI();
 
-	//Initial Setups
-	void								SetupMouseData();
-	void								SetupCameras();
-	void								GetandSetShaders();
-	void								LoadGameTextures();
-	void								LoadGameMaterials();
-	void								CreateInitialMeshes();
-	void								CreateInitialLight();
-	void								SetupPhysX();
-	
-	void								SetupSplitScreenSystem();
+	//For Audio setup reusing existing audio IDs
+	void								CopyAudioIDsFromFirstCar(int carIndex);
 
 	//Only for debug rendering available debug shapes in the scene
 	void								SetStartupDebugRenderObjects();
@@ -93,28 +84,9 @@ public:
 
 	//Render Logic
 	void								Render() const;
-	void								RenderRacetrack() const;
-	void								RenderUsingMaterial() const;
-	
-	void								RenderPhysXScene() const;
-	void								RenderPhysXCar(const CarController& carController) const;
-	void								RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numActors, Rgba& color) const;
-	
-	void								DebugRenderWaypointSystem() const;
-	void								RenderWaypointSystem() const;
 	
 	//For now let's say this is no longer necessary 
-	//void								RenderPhysXShapesForVehicle(const std::vector<PxShape*> shapes, int numShapes, Rgba& color) const;
-	
-	//Drawing Utilities for PhysX Shapes
-	Rgba								GetColorForGeometry(int type, bool isSleeping) const;
-	void								AddMeshForPxCube(CPUMesh& boxMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
-	void								AddMeshForPxSphere(CPUMesh& sphereMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
-	void								AddMeshForPxCapsule(CPUMesh& capMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
-	void								AddMeshForConvexMesh(CPUMesh& cvxMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
-	
-	void								DebugRenderToScreen() const;
-	void								DebugRenderToCamera() const;
+	//void								RenderPhysXShapesForVehicle(const std::vector<PxShape*> shapes, int numShapes, Rgba& color) const
 	
 	void								PostRender();
 	
@@ -125,6 +97,42 @@ public:
 	void								UpdateLightPositions();
 	
 	bool								IsAlive();
+
+private:
+
+	//Initial Setups
+	void								SetupCars();
+	void								SetupMouseData();
+	void								SetupCameras();
+	void								GetandSetShaders();
+	void								LoadGameTextures();
+	void								LoadGameMaterials();
+	void								CreateInitialMeshes();
+	void								CreateInitialLight();
+	void								SetupPhysX();
+
+	//Drawing Utilities for PhysX Shapes
+	Rgba								GetColorForGeometry(int type, bool isSleeping) const;
+	void								AddMeshForPxCube(CPUMesh& boxMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
+	void								AddMeshForPxSphere(CPUMesh& sphereMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
+	void								AddMeshForPxCapsule(CPUMesh& capMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
+	void								AddMeshForConvexMesh(CPUMesh& cvxMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
+
+	void								DebugRenderToScreen() const;
+	void								DebugRenderToCamera() const;
+
+	void								RenderRacetrack() const;
+	void								RenderUsingMaterial() const;
+
+	void								RenderPhysXScene() const;
+	void								RenderPhysXCar(const CarController& carController) const;
+	void								RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numActors, Rgba& color) const;
+
+	void								RenderGearNumber() const;
+
+	void								DebugRenderWaypointSystem() const;
+	void								RenderWaypointSystem() const;
+
 private:
 	bool								m_isGameAlive = false;
 	bool								m_consoleDebugOnce = false;
@@ -139,7 +147,7 @@ private:
 
 	int									m_numConnectedPlayers = 0;
 
-	Car									m_cars[4];
+	Car*								m_cars[4] = {nullptr, nullptr, nullptr, nullptr};
 	Vec3								m_startPositions[4] = { 
 											Vec3(15.f, 10.f, 0.f),
 											Vec3(15.f, 10.f, -10.f), 
@@ -186,6 +194,7 @@ public:
 
 	Camera*								m_mainCamera = nullptr;
 	Camera*								m_devConsoleCamera = nullptr;
+	Camera*								m_UICamera = nullptr;
 	Rgba*								m_clearScreenColor = nullptr;
 	
 	float								m_camFOVDegrees = 60.f; //Desired Camera Field of View
@@ -196,20 +205,8 @@ public:
 	float								m_devConsoleScreenHeight = 0.f;
 
 	// Define the shapes, and how are they positionedin the world; 
-	GPUMesh*							m_cube = nullptr; 
-	Matrix44							m_cubeTransform; // cube's model matrix
-
-	GPUMesh*							m_sphere = nullptr;
-	Matrix44							m_sphereTransform;   // sphere's model matrix
-
-	GPUMesh*							m_quad = nullptr;
-	Matrix44							m_quadTransfrom;
-
 	GPUMesh*							m_baseQuad = nullptr;
 	Matrix44							m_baseQuadTransform;
-
-	GPUMesh*							m_capsule = nullptr;
-	Matrix44							m_capsuleModel;
 
 	//------------------------------------------------------------------------------------------------------------------------------
 	// PhysX Meshes and Textures used by car and other PhysX objects

@@ -1,5 +1,6 @@
 #include "Game/SplitScreenSystem.hpp"
 //Engine Systems
+#include "Engine/Math/Vec2.hpp"
 #include "Engine/Commons/EngineCommon.hpp"
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -8,29 +9,29 @@
 //////////////////////////////////////////////////////////////////////////
 
 //2P Vertical Splits
-const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_2P_FIRST_MIN = Vec2::ZERO;
+const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_2P_FIRST_MIN = Vec2(0.f, 0.f);
 const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_2P_FIRST_MAX = Vec2(0.5f, 1.f);
 const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_2P_SECOND_MIN = Vec2(0.5f, 0.f);
-const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_2P_SECOND_MAX = Vec2::ONE;
+const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_2P_SECOND_MAX = Vec2(1.f, 1.f);
 
 //2P Horizontal Splits
 const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_2P_FIRST_MIN = Vec2(0.f, 0.5f);
-const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_2P_FIRST_MAX = Vec2::ONE;
-const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_2P_SECOND_MIN = Vec2::ZERO;
+const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_2P_FIRST_MAX = Vec2(1.f, 1.f);
+const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_2P_SECOND_MIN = Vec2(0.f, 0.f);
 const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_2P_SECOND_MAX = Vec2(1.f, 0.5f);
 
 //3P Vertical Splits
 const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_3P_FIRST_MIN = Vec2(0.f, 0.5f);
 const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_3P_FIRST_MAX = Vec2(0.5f, 1.f);
 const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_3P_SECOND_MIN = Vec2(0.5f, 0.5f);
-const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_3P_SECOND_MAX = Vec2::ONE;
-const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_3P_THIRD_MIN = Vec2::ZERO;
+const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_3P_SECOND_MAX = Vec2(1.f, 1.f);
+const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_3P_THIRD_MIN = Vec2(0.f, 0.f);
 const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_3P_THIRD_MAX = Vec2(1.f, 0.5f);
 
 //3P Horizontal Splits
 const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_3P_FIRST_MIN = Vec2(0.f, 0.5f);
-const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_3P_FIRST_MAX = Vec2::ONE;
-const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_3P_SECOND_MIN = Vec2::ZERO;
+const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_3P_FIRST_MAX = Vec2(1.f, 1.f);
+const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_3P_SECOND_MIN = Vec2(0.f, 0.f);
 const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_3P_SECOND_MAX = Vec2(0.5f, 0.5f);
 const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_3P_THIRD_MIN = Vec2(0.5f, 0.f);
 const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_3P_THIRD_MAX = Vec2(1.f, 0.5f);
@@ -39,8 +40,8 @@ const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_3P_THIRD_MAX = Vec2(1.f, 0
 const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_4P_FIRST_MIN = Vec2(0.f, 0.5f);
 const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_4P_FIRST_MAX = Vec2(0.5f, 1.f);
 const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_4P_SECOND_MIN = Vec2(0.5f, 0.5f);
-const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_4P_SECOND_MAX = Vec2::ONE;
-const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_4P_THIRD_MIN = Vec2::ZERO;
+const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_4P_SECOND_MAX = Vec2(1.f, 1.f);
+const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_4P_THIRD_MIN = Vec2(0.f, 0.f);
 const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_4P_THIRD_MAX = Vec2(0.5f, 0.5f);
 const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_4P_FOURTH_MIN = Vec2(0.5f, 0.f);
 const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_4P_FOURTH_MAX = Vec2(1.f, 0.5f);
@@ -48,10 +49,10 @@ const STATIC Vec2 SplitScreenSystem::VERTICAL_SPLIT_4P_FOURTH_MAX = Vec2(1.f, 0.
 //4P Horizontal Splits
 const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_4P_FIRST_MIN = Vec2(0.f, 0.5f);
 const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_4P_FIRST_MAX = Vec2(0.f, 1.f);
-const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_4P_SECOND_MIN = Vec2::ZERO;
+const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_4P_SECOND_MIN = Vec2(0.f, 0.f);
 const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_4P_SECOND_MAX = Vec2(0.5f, 0.5f);
 const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_4P_THIRD_MIN = Vec2(0.5f, 0.5f);
-const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_4P_THIRD_MAX = Vec2::ONE;
+const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_4P_THIRD_MAX = Vec2(1.f, 1.f);
 const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_4P_FOURTH_MIN = Vec2(0.5f, 0.f);
 const STATIC Vec2 SplitScreenSystem::HORIZONTAL_SPLIT_4P_FOURTH_MAX = Vec2(1.f, 0.5f);
 
