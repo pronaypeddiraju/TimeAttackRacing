@@ -36,7 +36,10 @@ public:
 private:
 	void					SetSystemToNextWaypoint();
 	void					AddTimeStampForLap();
+	double					GetLastLapTime();
 	double					GetAccumulatedLapTimes() const;
+
+	void					ComputeBestLapTimeForRun();
 
 private:
 	std::vector<WaypointRegionBased> m_waypointList;
@@ -49,9 +52,4 @@ private:
 	double					m_startTime = 0.0;
 
 	std::vector<double>		m_timeStamps;
-
-	//------------------------------------------------------------------------------------------------------------------------------
-	//UI Widget Data
-	//------------------------------------------------------------------------------------------------------------------------------
-
 };

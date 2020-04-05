@@ -111,6 +111,10 @@ private:
 	void								CreateInitialLight();
 	void								SetupPhysX();
 
+	//Update Functions
+	void								UpdateAllCars(float deltaTime);
+	void								CheckForRaceCompletion();
+
 	//Drawing Utilities for PhysX Shapes
 	Rgba								GetColorForGeometry(int type, bool isSleeping) const;
 	void								AddMeshForPxCube(CPUMesh& boxMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
@@ -118,6 +122,7 @@ private:
 	void								AddMeshForPxCapsule(CPUMesh& capMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
 	void								AddMeshForConvexMesh(CPUMesh& cvxMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
 
+	//Render Functions
 	void								DebugRenderToScreen() const;
 	void								DebugRenderToCamera() const;
 
@@ -313,10 +318,10 @@ public:
 	//------------------------------------------------------------------------------------------------------------------------------
 	// Waypoint System
 	//------------------------------------------------------------------------------------------------------------------------------
-	//WaypointSystem						m_waypointSystem;
-	//WaypointSystem						m_wayPointSystemP2;
-	
 	bool								m_debugRenderWaypoints = false;
+	//Save File data
+	double								m_bestTimeFromFile = 0.0;
+	double								m_bestTimeForRun = 0.0;
 
 	//------------------------------------------------------------------------------------------------------------------------------
 	// Split Screen System

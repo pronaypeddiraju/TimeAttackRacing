@@ -40,7 +40,15 @@ void Car::Update(float deltaTime)
 	m_audio->Update();
 
 	//Update the waypoint system
-	m_waypoints.Update(m_controller->GetVehiclePosition());
+	if (m_waypoints.AreLapsComplete())
+	{
+		m_raceTime = m_waypoints.GetTotalTime();
+	}
+	else
+	{
+		m_waypoints.Update(m_controller->GetVehiclePosition());
+		m_raceTime = m_waypoints.GetTotalTime();
+	}
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -149,6 +157,12 @@ void Car::UpdateCarCamera(float deltaTime)
 	Vec3 carForward = m_controller->GetVehicleForwardBasis();
 
 	m_camera->Update(carForward, deltaTime);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+double Car::GetRaceTime()
+{
+	return m_raceTime;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

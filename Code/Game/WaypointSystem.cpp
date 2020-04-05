@@ -111,7 +111,7 @@ void WaypointSystem::Update(const Vec3& carPosition)
 {
 	if (m_lapsCompleted)
 	{
-		//Do something here to display that the time is complete?
+		//We finished the track. There are no more waypoints
 		return;
 	}
 
@@ -214,11 +214,11 @@ void WaypointSystem::SetSystemToNextWaypoint()
 //------------------------------------------------------------------------------------------------------------------------------
 void WaypointSystem::AddTimeStampForLap()
 {
-	m_timeStamps.push_back(GetAccumulatedLapTimes());
+	m_timeStamps.push_back(GetLastLapTime());
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-double WaypointSystem::GetAccumulatedLapTimes() const
+double WaypointSystem::GetLastLapTime()
 {
 	std::vector<double>::const_iterator timeItr = m_timeStamps.begin();
 	if (timeItr == m_timeStamps.end())
@@ -235,7 +235,23 @@ double WaypointSystem::GetAccumulatedLapTimes() const
 
 			timeItr++;
 		}
-
-		return GetCurrentTimeSeconds() - m_startTime + accumulatedTime;
+		
+		return GetCurrentTimeSeconds() - m_startTime - accumulatedTime;
 	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+double WaypointSystem::GetAccumulatedLapTimes() const
+{
+	std::vector<double>::const_iterator timeItr = m_timeStamps.begin();
+	double accumulatedTime = 0.0;
+
+	while (timeItr != m_timeStamps.end())
+	{
+		accumulatedTime += *timeItr;
+
+		timeItr++;
+	}
+
+	return accumulatedTime;
 }

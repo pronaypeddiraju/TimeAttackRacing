@@ -49,6 +49,8 @@ public:
 	void						SetCameraPerspectiveProjection(float m_camFOVDegrees, float nearZ, float farZ, float aspect);
 	void						UpdateCarCamera(float deltaTime);
 
+	double						GetRaceTime();
+
 private:
 
 private:
@@ -67,4 +69,6 @@ private:
 	float						m_HUD_HEIGHT = 150.f;
 
 	BitmapFont*					m_HUDFont = nullptr;
+
+	double						m_raceTime = 0.0f;
 };

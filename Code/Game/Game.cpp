@@ -366,6 +366,44 @@ void Game::SetupPhysX()
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+void Game::UpdateAllCars(float deltaTime)
+{
+	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
+	{
+		m_cars[carIndex]->Update(deltaTime);
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::CheckForRaceCompletion()
+{
+	bool raceEnded = true;
+	double bestTime = 9999.0;
+	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
+	{
+		if (!m_cars[carIndex]->GetWaypointsEditable().AreLapsComplete())
+		{
+			raceEnded = false;
+		}
+		else
+		{
+			if (bestTime > m_cars[carIndex]->GetRaceTime())
+			{
+				bestTime = m_cars[carIndex]->GetRaceTime();
+			}
+		}
+	}
+
+	if (raceEnded)
+	{
+		//The race has completed so you can do some logic here
+		TODO("Write the best time to an XML File");
+
+		g_devConsole->PrintString(Rgba::GREEN, std::string("Race Complete for all players"));
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 void Game::CopyAudioIDsFromFirstCar(int carIndex)
 {
 	m_cars[carIndex]->GetCarAudioEditable()->SetSimplexSoundID(m_cars[0]->GetCarAudio().GetSimplexSoundID());
@@ -1529,10 +1567,8 @@ void Game::Update( float deltaTime )
 
 	UpdateImGUI();
 
-	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
-	{
-		m_cars[carIndex]->Update(deltaTime);
-	}
+	UpdateAllCars(deltaTime);
+	CheckForRaceCompletion();
 
 	gProfiler->ProfilerPop();
 }
