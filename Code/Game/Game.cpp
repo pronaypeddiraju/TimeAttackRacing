@@ -161,6 +161,15 @@ void Game::SetupCameras()
 	m_devConsoleCamera = new Camera();
 	m_devConsoleCamera->SetColorTarget(nullptr);
 
+	//Create the UI Camera
+	m_UICamera = new Camera();
+	m_UICamera->SetColorTarget(nullptr);
+	
+	//Create the world bounds AABB2
+	Vec2 minWorldBounds = Vec2(20.f, -20.f);
+	Vec2 maxWorldBounds = Vec2(WORLD_WIDTH, WORLD_HEIGHT) + Vec2(-20.f, 20.f);
+	m_UIBounds = AABB2(minWorldBounds, maxWorldBounds);
+
 	//Set Projection Perspective for new Cam
 	m_camPosition = Vec3(30.f, 30.f, 60.f);
 	m_mainCamera->SetColorTarget(nullptr);
@@ -173,6 +182,8 @@ void Game::SetupCameras()
 
 		m_splitScreenSystem.AddCarCameraForPlayer(m_cars[carIndex]->GetCarCameraEditable(), m_cars[carIndex]->GetCarIndex());
 	}
+
+	m_UICamera->SetOrthoView(minWorldBounds, maxWorldBounds);
 
 	m_clearScreenColor = new Rgba(0.f, 0.f, 0.5f, 1.f);
 }
@@ -853,6 +864,9 @@ void Game::Render() const
 	m_splitScreenSystem.SetColorTargets(colorTargetView);
 	m_splitScreenSystem.ComputeSplits(eSplitMode::PREFER_VERTICAL_SPLIT);
 
+	m_UICamera->SetColorTarget(colorTargetView);
+	m_UICamera->SetViewport(Vec2::ZERO, Vec2::ONE);
+
 	// Move the camera to where it is in the scene
 	Matrix44 camTransform = Matrix44::MakeFromEuler( m_mainCamera->GetEuler(), m_rotationOrder ); 
 	camTransform = Matrix44::SetTranslation3D(m_camPosition, camTransform);
@@ -941,7 +955,8 @@ void Game::Render() const
 		RenderWaypointSystem();
 	}
 
-	
+	//RenderUITest();
+
 	if (g_devConsole->IsOpen())
 	{
 		g_devConsole->Render(*g_renderContext, *m_devConsoleCamera, DEVCONSOLE_LINE_HEIGHT);
@@ -1190,6 +1205,31 @@ void Game::RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numAct
 		m_pxCapMesh->CreateFromCPUMesh<Vertex_Lit>(&capMesh, GPU_MEMORY_USAGE_STATIC);
 		g_renderContext->DrawMesh(m_pxCapMesh);
 	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::RenderUITest() const
+{
+	g_renderContext->BindTextureViewWithSampler(0U, nullptr);
+
+	m_UICamera->SetViewport(Vec2::ZERO, Vec2::ONE);
+	m_UICamera->SetModelMatrix(Matrix44::IDENTITY);
+
+	g_renderContext->BeginCamera(*m_UICamera);
+	g_renderContext->BindShader(m_shader);
+
+	Vec2 camMinBounds = m_UICamera->GetOrthoBottomLeft();
+	Vec2 camMaxBounds = m_UICamera->GetOrthoTopRight();
+
+	//Toggle UI 
+	std::string printString = "Toggle Control Scheme (LCTRL Button) ";
+	std::vector<Vertex_PCU> textVerts;
+	m_squirrelFont->AddVertsForText2D(textVerts, Vec2(0.f, 0.f), m_fontHeight, printString, Rgba::WHITE);
+
+	g_renderContext->BindTextureViewWithSampler(0U, m_squirrelFont->GetTexture());
+	g_renderContext->DrawVertexArray(textVerts);
+
+	g_renderContext->EndCamera();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

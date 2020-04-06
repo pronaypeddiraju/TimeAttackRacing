@@ -133,6 +133,8 @@ private:
 	void								RenderPhysXCar(const CarController& carController) const;
 	void								RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numActors, Rgba& color) const;
 
+	void								RenderUITest() const;
+
 	void								RenderGearNumber() const;
 
 	void								DebugRenderWaypointSystem() const;
@@ -200,6 +202,10 @@ public:
 	Camera*								m_mainCamera = nullptr;
 	Camera*								m_devConsoleCamera = nullptr;
 	Camera*								m_UICamera = nullptr;
+
+	AABB2								m_UIBounds;
+	float								m_fontHeight = 5.0f;
+
 	Rgba*								m_clearScreenColor = nullptr;
 	
 	float								m_camFOVDegrees = 60.f; //Desired Camera Field of View
