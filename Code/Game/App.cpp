@@ -204,8 +204,6 @@ void App::RunFrame()
 
 void App::BeginFrame()
 {
-	gProfiler->ProfilerBeginFrame("App::BeginFrame");
-
 	g_renderContext->BeginFrame();
 	g_inputSystem->BeginFrame();
 	g_audio->BeginFrame();
@@ -226,8 +224,6 @@ void App::EndFrame()
 	g_debugRenderer->EndFrame();
 	g_ImGUI->EndFrame();
 	g_PxPhysXSystem->EndFrame();
-
-	gProfiler->ProfilerEndFrame();
 }
 
 void App::Update()

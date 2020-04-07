@@ -29,6 +29,7 @@
 #include "Engine/Renderer/SpriteSheet.hpp"
 #include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/TextureView.hpp"
+#include "Engine/Renderer/ObjectLoader.hpp"
 
 //------------------------------------------------------------------------------------------------------------------------------
 float g_shakeAmount = 0.0f;
@@ -118,6 +119,7 @@ void Game::StartUp()
 	Vec3 r = PhysXSystem::QuaternionToEulerAngles(q);
 
 	CreateInitialMeshes();
+	PerformAsyncLoading();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -374,6 +376,97 @@ void Game::SetupPhysX()
 	//Add things to your scene
 	PxRigidStatic* groundPlane = PxCreatePlane(*physX, PxPlane(0, 1, 0, 0), *pxMat);
 	pxScene->addActor(*groundPlane);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::PerformAsyncLoading()
+{
+	if (!m_threadedLoadComplete)
+	{
+		StartLoadingModel(m_carMeshPath);
+		StartLoadingModel(m_wheelMeshPath);
+		StartLoadingModel(m_wheelFlippedMeshPath);
+		StartLoadingModel(m_trackTestPath);
+		StartLoadingModel(m_trackCollisionsTestPath);
+
+		int coreCount = std::thread::hardware_concurrency();
+		int halfCores = coreCount / 2;
+		for (int i = 0; i < halfCores; ++i)
+		{
+			m_threads.emplace_back(&Game::ModelLoadThread, this);
+		}
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::StartLoadingModel(std::string fileName)
+{
+	ModelLoadWork* work = new ModelLoadWork(fileName);
+	work->modelName = fileName;
+
+	++m_modelLoading;
+	m_modelLoadQueue.EnqueueLocked(work);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::ModelLoadThread()
+{
+	ModelLoadWork* work;
+
+	while (m_modelLoadQueue.DequeueLocked(&work))
+	{
+		//Load the file and make the CPUMesh here
+		std::string filePath = MODEL_PATH + work->modelName;
+		ObjectLoader object;
+		object.m_renderContext = g_renderContext;
+		object.LoadFromXML(filePath.c_str());
+		work->mesh = object.m_cpuMesh;
+		work->materialPath = object.m_defaultMaterialPath;
+
+		m_modelFinishedQueue.EnqueueLocked(work);
+	}
+	Sleep(0);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::FinishReadyModels()
+{
+	ModelLoadWork* work;
+	while (m_modelFinishedQueue.DequeueLocked(&work))
+	{
+		//Create the Model with GPUMesh here
+		work->model = new Model();
+		work->model->m_context = g_renderContext;
+		work->model->m_mesh = new GPUMesh(g_renderContext);
+		work->model->m_mesh->CreateFromCPUMesh<Vertex_Lit>(work->mesh);
+		work->model->m_mesh->m_defaultMaterial = work->materialPath;
+
+		std::string modelPath = work->modelName;
+		std::string materialPath = work->materialPath;
+		std::vector<std::string> splits = SplitStringOnDelimiter(modelPath, '.');
+		if (splits[splits.size() - 1] == "obj" || splits[splits.size() - 1] == "mesh")
+		{
+			std::vector<std::string> materialSplits = SplitStringOnDelimiter(materialPath, '.');
+			materialPath = MODEL_PATH + materialSplits[0] + ".mat";
+		}
+
+		if (work->model->m_mesh->m_defaultMaterial != "")
+		{
+			work->model->m_material = g_renderContext->CreateOrGetMaterialFromFile(materialPath);
+		}
+
+		--m_modelLoading;
+
+		delete work;
+
+		ASSERT_RECOVERABLE(m_modelLoading >= 0, "m_modelLoading is less than 0");
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+bool Game::IsFinishedModelLoading() const
+{
+	return (m_modelLoading == 0);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -851,7 +944,10 @@ bool Game::HandleMouseScroll(float wheelDelta)
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::Render() const
 {
-	gProfiler->ProfilerPush("Game Render");
+	if (!m_threadedLoadComplete)
+	{
+		return;
+	}
 	
 	//Get the ColorTargetView from rendercontext
 	ColorTargetView *colorTargetView = g_renderContext->GetFrameColorTarget();
@@ -961,8 +1057,6 @@ void Game::Render() const
 	{
 		g_devConsole->Render(*g_renderContext, *m_devConsoleCamera, DEVCONSOLE_LINE_HEIGHT);
 	}
-
-	gProfiler->ProfilerPop();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1540,8 +1634,6 @@ void Game::DebugRenderToCamera() const
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::PostRender()
 {
-	gProfiler->ProfilerPush("Game::PostRender");
-
 	//Debug bools
 	m_consoleDebugOnce = true;
 
@@ -1560,14 +1652,35 @@ void Game::PostRender()
 	DebugRenderToScreen();
 
 	g_ImGUI->Render();
-
-	gProfiler->ProfilerPop();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::Update( float deltaTime )
 {
-	gProfiler->ProfilerPush("Game Update");
+	FinishReadyModels();
+
+	if (IsFinishedModelLoading() && !m_threadedLoadComplete)
+	{
+		m_carModel = g_renderContext->CreateOrGetMeshFromFile(m_carMeshPath);
+		m_wheelModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelMeshPath);
+		m_wheelFlippedModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelFlippedMeshPath);
+		 
+		m_trackTestModel = g_renderContext->CreateOrGetMeshFromFile(m_trackTestPath);
+		m_trackCollidersTestModel = g_renderContext->CreateOrGetMeshFromFile(m_trackCollisionsTestPath);
+
+		for (std::thread& threadHandle : m_threads)
+		{
+			threadHandle.join();
+		}
+
+		m_threads.clear();
+
+		m_threadedLoadComplete = true;
+	}
+	else if (!m_threadedLoadComplete)
+	{
+		return;
+	}
 
 	HandleMouseInputs(deltaTime);
 	
@@ -1609,8 +1722,6 @@ void Game::Update( float deltaTime )
 
 	UpdateAllCars(deltaTime);
 	CheckForRaceCompletion();
-
-	gProfiler->ProfilerPop();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1623,6 +1734,11 @@ void Game::FixedUpdate(float deltaTime)
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::UpdatePhysXCar(float deltaTime)
 {
+	if (!m_threadedLoadComplete)
+	{
+		return;
+	}
+
 	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
 	{
 		m_cars[carIndex]->FixedUpdate(deltaTime);
@@ -1816,12 +1932,12 @@ void Game::CreateInitialMeshes()
 	m_pxConvexMesh = new GPUMesh(g_renderContext);
 	m_pxCapMesh = new GPUMesh(g_renderContext);
 
-	m_carModel = g_renderContext->CreateOrGetMeshFromFile(m_carMeshPath);
-	m_wheelModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelMeshPath);
-	m_wheelFlippedModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelFlippedMeshPath);
-
-	m_trackTestModel = g_renderContext->CreateOrGetMeshFromFile(m_trackTestPath);
-	m_trackCollidersTestModel = g_renderContext->CreateOrGetMeshFromFile(m_trackCollisionsTestPath);
+//	m_carModel = g_renderContext->CreateOrGetMeshFromFile(m_carMeshPath);
+// 	m_wheelModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelMeshPath);
+// 	m_wheelFlippedModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelFlippedMeshPath);
+// 
+// 	m_trackTestModel = g_renderContext->CreateOrGetMeshFromFile(m_trackTestPath);
+// 	m_trackCollidersTestModel = g_renderContext->CreateOrGetMeshFromFile(m_trackCollisionsTestPath);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

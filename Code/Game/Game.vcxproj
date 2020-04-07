@@ -198,6 +198,7 @@
     <ClCompile Include="CarCamera.cpp" />
     <ClCompile Include="CarController.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="GameplayWork.cpp" />
     <ClCompile Include="Main_Windows.cpp">
       <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ShowIncludes>
       <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ShowIncludes>
@@ -218,6 +219,7 @@
     <ClInclude Include="EngineBuildPreferences.hpp" />
     <ClInclude Include="Game.hpp" />
     <ClInclude Include="GameCommon.hpp" />
+    <ClInclude Include="GameplayWork.hpp" />
     <ClInclude Include="SplitScreenSystem.hpp" />
     <ClInclude Include="WaypointRegionBased.hpp" />
     <ClInclude Include="WaypointTriggerBased.hpp" />

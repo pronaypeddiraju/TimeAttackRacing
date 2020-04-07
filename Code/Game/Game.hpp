@@ -7,6 +7,7 @@
 #include "Engine/Renderer/Material.hpp"
 #include "Engine/Renderer/SpriteSheet.hpp"
 #include "Engine/Renderer/IsoSpriteDefenition.hpp"
+#include "Engine/Core/Async/AsyncQueue.hpp"
 //Game Systems
 #include "Game/CarCamera.hpp"
 #include "Game/CarController.hpp"
@@ -16,6 +17,7 @@
 #include "Game/WaypointSystem.hpp"
 #include "Game/SplitScreenSystem.hpp"
 #include "Game/Car.hpp"
+#include "Game/GameplayWork.hpp"
 //Third Party
 #include "extensions/PxDefaultAllocator.h"
 #include "extensions/PxDefaultCpuDispatcher.h"
@@ -111,6 +113,13 @@ private:
 	void								CreateInitialLight();
 	void								SetupPhysX();
 
+	//Async Functionality 
+	void								PerformAsyncLoading();
+	void								StartLoadingModel(std::string fileName);
+	void								ModelLoadThread();
+	void								FinishReadyModels();
+	bool								IsFinishedModelLoading() const;
+
 	//Update Functions
 	void								UpdateAllCars(float deltaTime);
 	void								CheckForRaceCompletion();
@@ -175,6 +184,18 @@ public:
 	Shader*								m_normalShader = nullptr;
 	Shader*								m_defaultLit = nullptr;
 	
+	//Async Queues for the loading
+	AsyncQueue<ImageLoadWork*>			m_loadQueue;
+	AsyncQueue<ImageLoadWork*>			m_finishedQueue;
+	int									m_imageLoading = 0;
+
+	AsyncQueue<ModelLoadWork*>			m_modelLoadQueue;
+	AsyncQueue<ModelLoadWork*>			m_modelFinishedQueue;
+	int									m_modelLoading = 0;
+
+	std::vector<std::thread>			m_threads;
+	bool								m_threadedLoadComplete = false;
+
 	//Image Paths
 	std::string							m_testImagePath = "Test_StbiFlippedAndOpenGL.png";
 	std::string							m_boxTexturePath = "woodcrate.jpg";

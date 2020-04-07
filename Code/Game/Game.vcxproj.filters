@@ -43,6 +43,9 @@
     <ClCompile Include="CarAudio.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
+    <ClCompile Include="GameplayWork.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.hpp">
@@ -65,5 +68,6 @@
     <ClInclude Include="SplitScreenSystem.hpp" />
     <ClInclude Include="Car.hpp" />
     <ClInclude Include="CarAudio.hpp" />
+    <ClInclude Include="GameplayWork.hpp" />
   </ItemGroup>
 </Project>
