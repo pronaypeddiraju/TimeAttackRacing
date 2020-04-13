@@ -1,0 +1,119 @@
+# DFS-2 Project plan revision (04/07/2020)
+
+Name : Pronay
+Cohort: C28
+Project: TAR (Time Attack Racer)
+
+Notes about this document:
+
+- Each task has been assigned estimated time, task desciption and a NewTask ID. Format followed is below:
+	[TimeEstimate] <Task Desciption> (NewTask ID: ##)
+- Under each week's "Proposed plan" is an "Hours worked" section to be updated with actual time spent on task and the date for when it was done.
+- Each week has it's total hours planned listed along with space to list the total hours worked. 
+
+## WEEK 11: DEBUG FEATURES AND CAR TOOL (This Week)
+
+### Plan Proposed:
+
+	-	[3]	Debug Features (NewTask ID: 1)
+		-	[1]	Display FPS and frame times on screen
+		-	[1.5] Display debug values for gear, speed, brake, handbrake and other car controller variables
+		-	[0.5] Hook events to DevConsole for checkpoint crossing, race completion, best time for all players and gear switch on car
+
+	-	[2]	Implement a car reset hotkey (NewTask ID: 2)
+		-	[1] Implement a hotkey to "translate car along world up then set to default orientation"
+		-	[1]	Test and debug (This involves quaternion math so I want to be extra sure)
+
+	-	[3] Implement Car Tool (NewTask ID: 3)
+		-	[2] Expose all car variables to ImGUI debug widget interface
+		-	[1] Setup data and interface required to send vehicle info to PhysXSystem
+
+### Hours Worked:
+
+	-	[ ] (04/00/2020) Debug Features (NewTask ID: 1)
+	-	[ ] (04/00/2020) Implement a car reset hotkey (NewTask ID: 2)
+	-	[ ] (04/00/2020) Implement Car Tool (NewTask ID: 3)
+
+Total Hours Planned: 8 Hours
+Total Hours Worked: X Hours
+
+## WEEK 12: GAME LOOP COMPLETION AND CAR TUNING
+
+### Plan Proposed:
+
+	-	[3]	Create a tune system(NewTask ID: 4)
+		-	[1]	Create a tune class/struct to store tunes. Allow for saving car tunes to select between (hotkey to change tune if possible)
+		- 	[1] Refactor Game logic to use tune objects before creating car (refactor vehicle creation logic)
+		-	[1] Test and Debug tune logic
+
+	-	[4]	Create a Simple Menu  (NewTask ID: 5)
+		-	[2] Implement widget system from RTS to have "Play", "Tune Car", "Quit" functionality
+		-	[1] Implement some statefull-ness (LOADING_STATE, MENU_STATE, GAME_STATE, END_STATE)
+		-	[1] Create a duplicate menu for end of race to have "REPLAY", "RETURN TO MENU" functionality
+
+	-	[4] Implement a car HUD  (NewTask ID: 6)
+		-	[2] Implement a radial speedometer
+		-	[1] Implement a lap tracker using each player's waypoint system
+		-	[1] Display current times for all players
+
+	-	[3]	Tune the car(NewTask ID: 7)
+		-	Find good values for the car
+
+### Hours Worked:
+
+	-	[ ] (04/00/2020) Create a tune system(NewTask ID: 4)
+	-	[ ] (04/00/2020) Create a Simple Menu  (NewTask ID: 5)
+	-	[ ] (04/00/2020) Implement a car HUD  (NewTask ID: 6)
+	-	[ ] (04/00/2020) Tune the car (NewTask ID: 7)
+
+Total Hours Planned: 14 Hours
+Total Hours Worked: X Hours
+
+## WEEK 13: TRACK REFINEMENT AND PLAYER CONVEYANCE
+
+### Plan Proposed:
+
+	-	[3]	Add more meshes to scene(NewTask ID: 8)
+		-	[2] Use XML to load meshes and their Transforms into the scene
+		-	[1] Debug (Verify models are loaded correctly and in the right places)
+
+	-	[6]	Fix track and car scale(NewTask ID: 9)
+		-	[4]	Resize track to be bigger so lane is a good size for 2 cars
+		-	[2]	Test with 2 cars and make refinements
+
+	-	[3]	Conveyance for player(NewTask ID: 10)
+		-	[1]	Make 4 car albedo variants for all 4 players and load different ones for each
+		-	[2] Implement world-space UI text over car to indicate P1,P2,P3,P4 
+
+### Hours Worked:
+
+	-	[ ] (04/00/2020) Add more meshes to scene(NewTask ID: 8)
+	-	[ ] (04/00/2020) Fix track and car scale(NewTask ID: 9)
+	-	[ ] (04/00/2020) Conveyance for player(NewTask ID: 10)
+
+Total Hours Planned: 12 Hours
+Total Hours Worked: X Hours
+
+## WEEK 14: POLISH ARTIFACT
+
+### Plan Proposed:
+
+	-	[3]	Revisit audio(NewTask ID: 11)
+		-	[1]	Add menu audio
+		-	[1]	Implement audio for race start, race end
+		-	[1]	Refine vehicle audio 
+
+	-	[1] Refine art in the game (Changing any textures/models if required) (NewTask ID: 12)
+	-	[2]	Implement camera shake on car when bumping into other players (NewTask ID: 13)
+
+	-	[6]	Testing and Debugging all features of the game (NewTask ID: 14)
+
+### Hours Worked:
+
+	-	[ ] (04/00/2020) Revisit audio(NewTask ID: 11)
+	-	[ ] (04/00/2020) Refine art in the game (Changing any textures/models if required) (NewTask ID: 12)
+	-	[ ] (04/00/2020) Implement camera shake on car when bumping into other players (NewTask ID: 13)
+	-	[ ] (04/00/2020) Testing and Debugging all features of the game (NewTask ID: 14)
+
+Total Hours Planned: 12 Hours
+Total Hours Worked: X Hours

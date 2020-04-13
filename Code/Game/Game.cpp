@@ -168,14 +168,14 @@ void Game::SetupCameras()
 	m_UICamera->SetColorTarget(nullptr);
 	
 	//Create the world bounds AABB2
-	Vec2 minWorldBounds = Vec2(20.f, -20.f);
-	Vec2 maxWorldBounds = Vec2(WORLD_WIDTH, WORLD_HEIGHT) + Vec2(-20.f, 20.f);
+	Vec2 minWorldBounds = Vec2::ZERO;
+	Vec2 maxWorldBounds = Vec2((float)client.x, (float)client.y);
 	m_UIBounds = AABB2(minWorldBounds, maxWorldBounds);
 
 	//Set Projection Perspective for new Cam
 	m_camPosition = Vec3(30.f, 30.f, 60.f);
 	m_mainCamera->SetColorTarget(nullptr);
-	m_mainCamera->SetPerspectiveProjection( m_camFOVDegrees, 0.1f, 1000.0f, SCREEN_ASPECT);
+	m_mainCamera->SetPerspectiveProjection( m_camFOVDegrees, 0.1f, 1000.0f, aspect);
 
 	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
 	{
@@ -186,6 +186,7 @@ void Game::SetupCameras()
 	}
 
 	m_UICamera->SetOrthoView(minWorldBounds, maxWorldBounds);
+	m_devConsoleCamera->SetOrthoView(minWorldBounds, maxWorldBounds);
 
 	m_clearScreenColor = new Rgba(0.f, 0.f, 0.5f, 1.f);
 }
@@ -467,6 +468,62 @@ void Game::FinishReadyModels()
 bool Game::IsFinishedModelLoading() const
 {
 	return (m_modelLoading == 0);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::ImageLoadThread()
+{
+	ImageLoadWork* work;
+
+	while (m_loadQueue.DequeueLocked(&work))
+	{
+		//We use our image default constructor to load
+		work->image = new Image(work->imageName.c_str());
+		m_finishedQueue.EnqueueLocked(work);
+	}
+	Sleep(0);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::StartLoadingImage(std::string fileName)
+{
+	ImageLoadWork* work = new ImageLoadWork(fileName);
+	work->imageName = fileName;
+
+	++m_imageLoading;
+	m_loadQueue.EnqueueLocked(work);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::FinishReadyImages()
+{
+	ImageLoadWork* work;
+	if (m_finishedQueue.DequeueLocked(&work))
+	{
+		std::string name = work->imageName.c_str();
+
+		Texture2D *texture = new Texture2D(g_renderContext);
+		TextureView* textureView = nullptr;
+		texture->LoadTextureFromImage(*work->image);
+		textureView = texture->CreateTextureView2D();
+
+		g_renderContext->RegisterTextureView(work->imageName, textureView);
+
+		delete work->image;
+		work->image = nullptr;
+		delete work;
+		delete texture;
+
+		--m_imageLoading;
+
+		ASSERT_RECOVERABLE(m_imageLoading >= 0, "m_imageLoading is less than 0");
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+bool Game::IsFinishedImageLoading() const
+{
+	return (m_imageLoading == 0);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -958,7 +1015,8 @@ void Game::Render() const
 	m_devConsoleCamera->SetColorTarget(colorTargetView);
 
 	m_splitScreenSystem.SetColorTargets(colorTargetView);
-	m_splitScreenSystem.ComputeSplits(eSplitMode::PREFER_VERTICAL_SPLIT);
+	m_splitScreenSystem.ComputeViewPortSplits(eSplitMode::PREFER_VERTICAL_SPLIT);
+	SetupCarHUDsFromSplits();
 
 	m_UICamera->SetColorTarget(colorTargetView);
 	m_UICamera->SetViewport(Vec2::ZERO, Vec2::ONE);
@@ -1035,20 +1093,11 @@ void Game::Render() const
 				RenderPhysXCar(m_cars[renderCarIndex]->GetCarController());
 			}
 
-			//RenderGearNumber();
-
 			g_renderContext->EndCamera();
+
+			RenderGearNumber(carIndex);
 		}
 
-	}
-
-	if (m_debugRenderWaypoints)
-	{
-		DebugRenderWaypointSystem();
-	}
-	else
-	{
-		RenderWaypointSystem();
 	}
 
 	//RenderUITest();
@@ -1327,59 +1376,15 @@ void Game::RenderUITest() const
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-void Game::DebugRenderWaypointSystem() const
+void Game::SetupCarHUDsFromSplits() const
 {
-	//Maybe don't need this function anymore
-}
-
-//------------------------------------------------------------------------------------------------------------------------------
-void Game::RenderWaypointSystem() const
-{
-	//Maybe don't need this function anymore
-}
-
-/*
-//------------------------------------------------------------------------------------------------------------------------------
-void Game::RenderPhysXShapesForVehicle(const std::vector<PxShape*> shapes, int numShapes, Rgba& color) const
-{
-	for (int shapeIndex = 0; shapeIndex < numShapes; shapeIndex++)
+	//Set the ortho and view ports for each of the UI cameras
+	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
 	{
-		int type = shapes[shapeIndex]->getGeometryType();
-
-		switch (type)
-		{
-		case PxGeometryType::eBOX:
-		{
-			color = GetColorForGeometry(type, sleeping);
-			AddMeshForPxCube(boxMesh, *shapes[shapeInd], *shapes[shapeIndex], color);
-		}
-		break;
-		case PxGeometryType::eSPHERE:
-		{
-			color = GetColorForGeometry(type, sleeping);
-			AddMeshForPxSphere(sphereMesh, *actors[actorIndex], *shapes[shapeIndex], color);
-		}
-		break;
-		case PxGeometryType::eCONVEXMESH:
-		{
-			if (numShapes == 1)
-			{
-				color = GetColorForGeometry(type, sleeping);
-				AddMeshForConvexMesh(cvxMesh, *actors[actorIndex], *shapes[shapeIndex], color);
-			}
-		}
-		break;
-		case PxGeometryType::eCAPSULE:
-		{
-			color = GetColorForGeometry(type, sleeping);
-			AddMeshForPxCapsule(capMesh, *actors[actorIndex], *shapes[shapeIndex], color);
-		}
-		break;
-		default:
-			break;
-		}
+		Camera& carHUD = m_cars[carIndex]->GetCarHUDCamera();
+		TODO("Make UI ortho splits based on the viewports assigned to the SplitScreen System");
+	}
 }
-*/
 
 //------------------------------------------------------------------------------------------------------------------------------
 Rgba Game::GetColorForGeometry(int type, bool isSleeping) const
@@ -1657,9 +1662,7 @@ void Game::PostRender()
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::Update( float deltaTime )
 {
-	FinishReadyModels();
-
-	if (IsFinishedModelLoading() && !m_threadedLoadComplete)
+	if (IsFinishedImageLoading() && IsFinishedModelLoading() && !m_threadedLoadComplete)
 	{
 		m_carModel = g_renderContext->CreateOrGetMeshFromFile(m_carMeshPath);
 		m_wheelModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelMeshPath);
@@ -1679,10 +1682,12 @@ void Game::Update( float deltaTime )
 	}
 	else if (!m_threadedLoadComplete)
 	{
+		FinishReadyModels();
+		FinishReadyImages();
 		return;
 	}
 
-	HandleMouseInputs(deltaTime);
+	//HandleMouseInputs(deltaTime);
 	
 // 	Vec3 vehiclePosition = m_carController->GetVehiclePosition();
 // 	if (vehiclePosition.y < 0.f)
@@ -1697,12 +1702,6 @@ void Game::Update( float deltaTime )
 // 
 // 		m_carController->SetVehicleTransform(vehiclePosition, quat);
 // 	}
-
-	if(g_devConsole->GetFrameCount() > 1 && !m_devConsoleSetup)
-	{
-		m_devConsoleCamera->SetOrthoView(Vec2(-WORLD_WIDTH * 0.5f * SCREEN_ASPECT, -WORLD_HEIGHT * 0.5f), Vec2(WORLD_WIDTH * 0.5f * SCREEN_ASPECT, WORLD_HEIGHT * 0.5f));
-		m_devConsoleSetup = true;
-	}
 
 	g_renderContext->m_frameCount++;
 
@@ -1744,19 +1743,15 @@ void Game::UpdatePhysXCar(float deltaTime)
 		m_cars[carIndex]->FixedUpdate(deltaTime);
 	}
 
-// 	m_carController->FixedUpdate(deltaTime);
-// 	m_player2CarController->FixedUpdate(deltaTime);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::UpdateCarCamera(float deltaTime)
 {
-	//Listen to forseth
 	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
 	{
 		m_cars[carIndex]->UpdateCarCamera(deltaTime);
 	}
-	
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1866,16 +1861,21 @@ bool Game::IsAlive()
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-void Game::RenderGearNumber() const
+void Game::RenderGearNumber(int carIndex) const
 {
 	//Need to draw the gear indicator here
-	
+	Camera& HUD = m_cars[carIndex]->GetCarHUDCamera();
+	HUD.SetColorTarget(g_renderContext->GetFrameColorTarget());
+
+	g_renderContext->BeginCamera(HUD);
 	g_renderContext->BindTextureViewWithSampler(0U, m_squirrelFont->GetTexture());
 	g_renderContext->BindShader(m_shader);
 	std::vector<Vertex_PCU> verts;
-	std::string textValue = std::to_string(m_cars[0]->GetCarController().GetVehicle()->mDriveDynData.getCurrentGear());
-	m_squirrelFont->AddVertsForText2D(verts, Vec2(0.f, 100.f), 100.f, textValue.c_str(), Rgba::RED);
+	std::string textValue = std::to_string(m_cars[carIndex]->GetCarController().GetVehicle()->mDriveDynData.getCurrentGear());
+	m_squirrelFont->AddVertsForText2D(verts, Vec2((HUD.GetOrthoTopRight().x * 0.5f) + 50.f * carIndex, 100.f), 10.f, textValue.c_str(), Rgba::RED);
 	g_renderContext->DrawVertexArray(verts);
+
+	g_renderContext->EndCamera();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1931,23 +1931,21 @@ void Game::CreateInitialMeshes()
 	m_pxSphere = new GPUMesh(g_renderContext);
 	m_pxConvexMesh = new GPUMesh(g_renderContext);
 	m_pxCapMesh = new GPUMesh(g_renderContext);
-
-//	m_carModel = g_renderContext->CreateOrGetMeshFromFile(m_carMeshPath);
-// 	m_wheelModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelMeshPath);
-// 	m_wheelFlippedModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelFlippedMeshPath);
-// 
-// 	m_trackTestModel = g_renderContext->CreateOrGetMeshFromFile(m_trackTestPath);
-// 	m_trackCollidersTestModel = g_renderContext->CreateOrGetMeshFromFile(m_trackCollisionsTestPath);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::LoadGameTextures()
 {
-	//Get the test texture
-	m_textureTest = g_renderContext->CreateOrGetTextureViewFromFile(m_testImagePath);
-	m_boxTexture = g_renderContext->CreateOrGetTextureViewFromFile(m_boxTexturePath);
-	m_sphereTexture = g_renderContext->CreateOrGetTextureViewFromFile(m_sphereTexturePath);
+	StartLoadingImage(m_testImagePath);
+	StartLoadingImage(m_boxTexturePath);
+	StartLoadingImage(m_sphereTexturePath);
 
+	int coreCount = std::thread::hardware_concurrency();
+	int halfCores = coreCount / 2;
+	for (int i = 0; i < halfCores; ++i)
+	{
+		m_threads.emplace_back(&Game::ImageLoadThread, this);
+	}
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1964,6 +1962,7 @@ void Game::GetandSetShaders()
 	m_defaultLit->SetDepth(eCompareOp::COMPARE_LEQUAL, true);
 }
 
+/*
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::HandleMouseInputs(float deltaTime)
 {
@@ -2001,3 +2000,4 @@ void Game::HandleMouseInputs(float deltaTime)
 	//m_camEuler.y -= static_cast<float>(mouseRelativePos.x);
 	//m_camEuler.x -= static_cast<float>(mouseRelativePos.y);
 }
+*/

@@ -122,6 +122,12 @@ physx::PxRigidDynamic* Car::GetCarRigidbody() const
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+Camera& Car::GetCarHUDCamera() const
+{
+	return *m_carHUD;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 WaypointSystem& Car::GetWaypointsEditable()
 {
 	return m_waypoints;

@@ -20,7 +20,7 @@ public:
 	int			GetNumPlayers() const;
 	void		SetNumPlayers(int numPlayers);
 
-	void		ComputeSplits(eSplitMode splitMode = PREFER_VERTICAL_SPLIT) const;
+	void		ComputeViewPortSplits(eSplitMode splitMode = PREFER_VERTICAL_SPLIT) const;
 
 	const std::array<CarCamera*, 4>&	GetAllCameras() const;
 	const CarCamera*					GetCameraForPlayerID(int playerID) const;

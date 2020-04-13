@@ -39,6 +39,7 @@ public:
 	CarAudio*					GetCarAudioEditable();
 	int							GetCarIndex() const;
 	PxRigidDynamic*				GetCarRigidbody() const;
+	Camera&						GetCarHUDCamera() const;
 
 	WaypointSystem&				GetWaypointsEditable();
 	const WaypointSystem&		GetWaypoints() const;

@@ -98,7 +98,7 @@ void SplitScreenSystem::SetNumPlayers(int numPlayers)
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-void SplitScreenSystem::ComputeSplits(eSplitMode splitMode) const
+void SplitScreenSystem::ComputeViewPortSplits(eSplitMode splitMode) const
 {
 	ASSERT_OR_DIE(m_numPlayers > 0, "The number of players in the Split Screen System is 0");
 

@@ -69,7 +69,7 @@ public:
 	void								HandleCharacter(unsigned char charCode);
 
 	bool								HandleMouseScroll(float wheelDelta);
-	void								HandleMouseInputs(float deltaTime);
+	//void								HandleMouseInputs(float deltaTime);
 
 	//Create PhysX World Objects
 	void								CreatePhysXVehicleBoxWall();
@@ -120,6 +120,12 @@ private:
 	void								FinishReadyModels();
 	bool								IsFinishedModelLoading() const;
 
+	void								ImageLoadThread();
+	void								StartLoadingImage(std::string fileName);
+	void								FinishReadyImages();
+	bool								IsFinishedImageLoading() const;
+
+
 	//Update Functions
 	void								UpdateAllCars(float deltaTime);
 	void								CheckForRaceCompletion();
@@ -144,11 +150,9 @@ private:
 
 	void								RenderUITest() const;
 
-	void								RenderGearNumber() const;
+	void								RenderGearNumber(int carIndex) const;
 
-	void								DebugRenderWaypointSystem() const;
-	void								RenderWaypointSystem() const;
-
+	void								SetupCarHUDsFromSplits() const;
 private:
 	bool								m_isGameAlive = false;
 	bool								m_consoleDebugOnce = false;
