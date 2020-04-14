@@ -54,9 +54,13 @@ NOTE: The entire plan has been listed in this file along with hourly breakdowns 
 
 Enter the actual house used here as well as the date you worked on this task in the only correct date format (DD/MM/YYYY). Fight me on date format.
 
-	-	[ ] (00/03/2020) Research on Vehicle Audio (Task ID: 1)
-	-	[ ] (00/03/2020) Vehicle Audio Setup (Task ID: 2)
-	-	[ ] (00/03/2020) AudioSystem Implementation Changes (Task ID: 3)
+	-	[4] (00/03/2020) Research on Vehicle Audio (Task ID: 1)
+	-	[6] (00/03/2020) Vehicle Audio Setup (Task ID: 2)
+	-	[2] (00/03/2020) AudioSystem Implementation Changes (Task ID: 3)
+
+Additional Tasks Performed:
+
+	-	[3]	Debugging and Bug fixing on SplitScreen System
 
 Total Hours Planned: 9 Hours
 Total Hours Worked: X Hours
@@ -81,8 +85,13 @@ Total Hours Worked: X Hours
 Enter the actual house used here as well as the date you worked on this task in the only correct date format (DD/MM/YYYY). Fight me on date format.
 
 	-	[ ] (00/03/2020) Audio Debug and Integration (Task ID: 4)
-	-	[ ] (00/03/2020) Waypoint Time Tracking (Task ID: 5)
+	-	[2] (00/03/2020) Waypoint Time Tracking (Task ID: 5)
 	-	[ ] (00/03/2020) Update Vehicle Creation Logic (Task ID: 6)
+
+Other Tasks Performed:
+
+	-	[5]	Fixing issues with Debug build cause by using static variables
+	-	[1]	Fixed issues with Audio for other players
 
 Total Hours Planned: 9 Hours
 Total Hours Worked: X Hours

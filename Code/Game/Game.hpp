@@ -80,6 +80,9 @@ public:
 	void								CreatePhysXConvexHull();
 	void								CreatePhysXStack(const Vec3& position, uint size, float halfExtent);
 	
+	//Vehicle Reset
+	void								ResetCarPositionForPlayer(int playerID);
+
 	//Race Logic and Systems
 	void								CreateWayPoints();
 	PxRigidActor*						GetCarActor() const;
@@ -92,7 +95,8 @@ public:
 	
 	void								PostRender();
 	
-	void								UpdatePhysXCar( float deltaTime );
+	void								PerformFPSCachingAndCalculation(float deltaTime);
+	void								UpdatePhysXCar(float deltaTime);
 	void								UpdateCarCamera(float deltaTime);
 	void								UpdateImGUIPhysXWidget();
 	void								UpdateImGUIDebugWidget();
@@ -149,6 +153,7 @@ private:
 	void								RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numActors, Rgba& color) const;
 
 	void								RenderUITest() const;
+	void								RenderDebugInfoOnScreen() const;
 
 	void								RenderGearNumber(int carIndex) const;
 
@@ -165,7 +170,15 @@ private:
 
 	//float								m_anotherTestTempHackStackZ = 20.f;	//20 is good I guess?
 
+	float								m_deltaTime = 0.f;
+	float								m_fpsCache[1000] = {0.f};
+	float								m_fpsLastFrame = 0.f;
+	float								m_avgFPS = 0.f;
+	int									m_fpsCacheIndex = 0;
 	int									m_numConnectedPlayers = 0;
+
+	float								m_fpsLowest = 10.f;
+	float								m_fpsHighest = 0.f;
 
 	Car*								m_cars[4] = {nullptr, nullptr, nullptr, nullptr};
 	Vec3								m_startPositions[4] = { 
@@ -229,7 +242,7 @@ public:
 	Camera*								m_UICamera = nullptr;
 
 	AABB2								m_UIBounds;
-	float								m_fontHeight = 5.0f;
+	float								m_fontHeight = 50.0f;
 
 	Rgba*								m_clearScreenColor = nullptr;
 	

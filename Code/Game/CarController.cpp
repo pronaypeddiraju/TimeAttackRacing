@@ -269,9 +269,17 @@ Vec3 CarController::GetVehicleForwardBasis() const
 {
 	PxMat44 pose = m_vehicle4W->getRigidDynamicActor()->getGlobalPose();
 	PxVec3 pxForward = pose.getBasis(2);
-
 	Vec3 forward = g_PxPhysXSystem->PxVectorToVec(pxForward);
 	return forward;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+Vec3 CarController::GetVehicleRightBasis() const
+{
+	PxMat44 pose = m_vehicle4W->getRigidDynamicActor()->getGlobalPose();
+	PxVec3 pxRight = pose.getBasis(1);
+	Vec3 right = g_PxPhysXSystem->PxVectorToVec(pxRight);
+	return right;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

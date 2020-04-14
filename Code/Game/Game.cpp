@@ -146,8 +146,8 @@ void Game::SetupCars()
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::SetupMouseData()
 {
-	g_windowContext->SetMouseMode(MOUSE_MODE_RELATIVE);
-	g_windowContext->HideMouse();
+	g_windowContext->SetMouseMode(MOUSE_MODE_ABSOLUTE);
+	//g_windowContext->HideMouse();
 }
 
 void Game::SetupCameras()
@@ -761,6 +761,12 @@ void Game::CreatePhysXStack(const Vec3& position, uint size, float halfExtent)
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+void Game::ResetCarPositionForPlayer(int playerID)
+{
+	m_cars[playerID]->ResetCarPosition();
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 void Game::HandleKeyPressed(unsigned char keyCode)
 {
 	if(g_devConsole->IsOpen())
@@ -769,12 +775,13 @@ void Game::HandleKeyPressed(unsigned char keyCode)
 		return;
 	}
 
+	/*
 	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
 	{
 		m_cars[carIndex]->GetCarControllerEditable()->HandleKeyPressed(keyCode);
 	}
-
 	return;
+	*/
 
 	switch( keyCode )
 	{
@@ -803,25 +810,25 @@ void Game::HandleKeyPressed(unsigned char keyCode)
 			*/
 		}
 		break;
-		case N_KEY:
 		case F1_KEY:
 		{
-			//Setup the ambient intensity to lesser
-			m_ambientIntensity -= m_ambientStep;
+			ResetCarPositionForPlayer(0);
 		}
 		break;
 		case F2_KEY:
 		{
-			//Setup the ambient intensity to lesser
-			m_ambientIntensity += m_ambientStep;
+			ResetCarPositionForPlayer(1);
 		}
 		break;
 		case F3_KEY:
 		{
-			//Toggle directional light
-			m_enableDirectional = !m_enableDirectional;
+			ResetCarPositionForPlayer(2);
 		}
 		break;
+		case F4_KEY:
+		{
+			ResetCarPositionForPlayer(3);
+		}
 		case A_KEY:
 		{
 			//Handle left movement
@@ -858,16 +865,6 @@ void Game::HandleKeyPressed(unsigned char keyCode)
 			m_camPosition += worldMovementDirection; 
 		}
 		break;
-		case F4_KEY:
-		{
-			//Set volume back to 1
-			//g_audio->SetSoundPlaybackVolume(m_testPlayback, 1.0f);
-
-			//Toggle Shader here
-			m_normalMode = !m_normalMode;
-
-			break;
-		}
 		case F5_KEY:
 		{
 			//Set volume to 0
@@ -892,6 +889,7 @@ void Game::HandleKeyPressed(unsigned char keyCode)
 		case NUM_1:
 		{
 			m_debugViewCarCollider = !m_debugViewCarCollider;
+			break;
 		}
 		default:
 		break;
@@ -1376,6 +1374,55 @@ void Game::RenderUITest() const
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+void Game::RenderDebugInfoOnScreen() const
+{
+	g_renderContext->BeginCamera(*m_UICamera);
+	g_renderContext->BindShader(m_shader);
+
+	Vec2 camMinBounds = m_UICamera->GetOrthoBottomLeft();
+	Vec2 camMaxBounds = m_UICamera->GetOrthoTopRight();
+
+	g_renderContext->BindTextureViewWithSampler(0U, m_squirrelFont->GetTexture());
+
+	Vec2 displayArea = Vec2::ZERO;
+	displayArea.y = camMaxBounds.y - m_fontHeight;
+
+	//Print FPS info (Avg FPS)
+	std::string printString = Stringf("FPS: %.2f", m_avgFPS);
+	std::vector<Vertex_PCU> textVerts;
+
+	m_squirrelFont->AddVertsForText2D(textVerts, displayArea, m_fontHeight, printString, Rgba::WHITE);
+	g_renderContext->DrawVertexArray(textVerts);
+
+	displayArea.y -= m_fontHeight;
+
+	//Lowest FPS
+	printString = Stringf("Lowest FPS: %.2f", m_fpsLowest);
+	textVerts.clear();
+	m_squirrelFont->AddVertsForText2D(textVerts, displayArea, m_fontHeight, printString, Rgba::ORGANIC_DIM_RED);
+	g_renderContext->DrawVertexArray(textVerts);
+
+	displayArea.y -= m_fontHeight;
+
+	//Highest FPS
+	printString = Stringf("Highest FPS: %.2f", m_fpsHighest);
+	textVerts.clear();
+	m_squirrelFont->AddVertsForText2D(textVerts, displayArea, m_fontHeight, printString, Rgba::ORGANIC_GREEN);
+	g_renderContext->DrawVertexArray(textVerts);
+
+	displayArea.y -= m_fontHeight;
+
+	//(Frame delta)
+	printString = Stringf("Frame Delta-Time: %.5f", m_deltaTime);
+	textVerts.clear();
+	m_squirrelFont->AddVertsForText2D(textVerts, displayArea, m_fontHeight, printString, Rgba::WHITE);
+	g_renderContext->DrawVertexArray(textVerts);
+
+
+	g_renderContext->EndCamera();
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 void Game::SetupCarHUDsFromSplits() const
 {
 	//Set the ortho and view ports for each of the UI cameras
@@ -1654,14 +1701,62 @@ void Game::PostRender()
 	}
 
 	//All screen Debug information
-	DebugRenderToScreen();
+	//DebugRenderToScreen();
 
 	g_ImGUI->Render();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-void Game::Update( float deltaTime )
+void Game::PerformFPSCachingAndCalculation(float deltaTime)
 {
+	m_fpsCache[m_fpsCacheIndex] = m_fpsLastFrame = 1.f / deltaTime;
+
+	if (m_fpsLastFrame > m_fpsHighest)
+	{
+		m_fpsHighest = m_fpsLastFrame;
+	}
+
+	if (m_fpsLastFrame < m_fpsLowest)
+	{
+		m_fpsLowest = m_fpsLastFrame;
+	}
+
+	m_deltaTime = deltaTime;
+
+	m_fpsCacheIndex++;
+	if (m_fpsCacheIndex == 1000)
+	{
+		m_fpsCacheIndex = 0;
+	}
+
+	int entriesCounted = 0;
+	m_avgFPS = 0.f;
+	for (int fpsIndex = 0; fpsIndex < 1000; fpsIndex++)
+	{
+		if (m_fpsCache[fpsIndex] == 0.f)
+		{
+			//This entry has not been filled yet
+			continue;
+		}
+
+		m_avgFPS += m_fpsCache[fpsIndex];
+		entriesCounted++;
+	}
+
+	m_avgFPS /= entriesCounted;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::Update(float deltaTime)
+{
+	if (m_threadedLoadComplete)
+	{
+		//Once everything is loaded we want to start calculation
+		PerformFPSCachingAndCalculation(deltaTime);
+		RenderDebugInfoOnScreen();
+	}
+
+
 	if (IsFinishedImageLoading() && IsFinishedModelLoading() && !m_threadedLoadComplete)
 	{
 		m_carModel = g_renderContext->CreateOrGetMeshFromFile(m_carMeshPath);
@@ -1688,20 +1783,6 @@ void Game::Update( float deltaTime )
 	}
 
 	//HandleMouseInputs(deltaTime);
-	
-// 	Vec3 vehiclePosition = m_carController->GetVehiclePosition();
-// 	if (vehiclePosition.y < 0.f)
-// 	{
-// 		//Vehicle is falling
-// 		vehiclePosition.y = 10.f;
-// 		PxQuat quat;
-// 		quat.x = 0.f;
-// 		quat.y = 0.f;
-// 		quat.z = 0.f;
-// 		quat.w = 0.f;
-// 
-// 		m_carController->SetVehicleTransform(vehiclePosition, quat);
-// 	}
 
 	g_renderContext->m_frameCount++;
 
@@ -1757,8 +1838,8 @@ void Game::UpdateCarCamera(float deltaTime)
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::UpdateImGUI()
 {
-	//UpdateImGUIPhysXWidget();
-	//UpdateImGUIDebugWidget();
+	UpdateImGUIPhysXWidget();
+	UpdateImGUIDebugWidget();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

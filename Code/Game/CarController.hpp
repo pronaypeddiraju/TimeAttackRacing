@@ -31,6 +31,7 @@ public:
 	PxVehicleDrive4WRawInputData* GetVehicleInputData() const;
 	Vec3						GetVehiclePosition() const;
 	Vec3						GetVehicleForwardBasis() const;
+	Vec3						GetVehicleRightBasis() const;
 
 	//Vehicle Controls
 	void	AccelerateForward(float analogAcc = 0.f);

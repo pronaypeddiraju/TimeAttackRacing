@@ -31,6 +31,7 @@ void Car::StartUp(const Vec3& startPosition, int controllerID)
 	Vec2 orthoBottomLeft = Vec2(0.f, 0.f);
 	Vec2 orthoTopRight = Vec2(m_HUD_WIDTH, m_HUD_HEIGHT);
 	m_carHUD->SetOrthoView(orthoBottomLeft, orthoTopRight);
+
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -169,6 +170,18 @@ void Car::UpdateCarCamera(float deltaTime)
 double Car::GetRaceTime()
 {
 	return m_raceTime;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Car::ResetCarPosition()
+{
+	Vec3 vehiclePosition = m_controller->GetVehiclePosition();
+	Vec3 vehicleForward = m_controller->GetVehicleForwardBasis();
+	Vec3 vehicleRight = m_controller->GetVehicleRightBasis();
+
+	PxQuat q = PhysXSystem::MakeQuaternionFromVectors(vehicleForward, Vec3::FORWARD);
+
+	m_controller->SetVehicleTransform(vehiclePosition, q);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

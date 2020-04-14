@@ -307,7 +307,7 @@ bool App::HandleKeyPressed(unsigned char keyCode)
 		case D_KEY:
 		case NUM_1:
 		{
-			//m_game->HandleKeyPressed(keyCode);
+			m_game->HandleKeyPressed(keyCode);
 			return true;
 		}
 		case F8_KEY:
