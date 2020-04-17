@@ -25,7 +25,7 @@ public:
 	~Car();
 
 	void						StartUp(const Vec3& startPosition, int controllerID);
-	void						Update(float deltaTime);
+	void						Update(float deltaTime, bool isInputEnabled = true);
 	void						FixedUpdate(float fixedTime);
 	void						Shutdown();
 

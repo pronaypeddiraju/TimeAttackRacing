@@ -46,6 +46,9 @@
     <ClCompile Include="GameplayWork.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
+    <ClCompile Include="UIWidget.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.hpp">
@@ -60,14 +63,35 @@
     <ClInclude Include="EngineBuildPreferences.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
-    <ClInclude Include="CarController.hpp" />
-    <ClInclude Include="CarCamera.hpp" />
-    <ClInclude Include="WaypointSystem.hpp" />
-    <ClInclude Include="WaypointTriggerBased.hpp" />
-    <ClInclude Include="WaypointRegionBased.hpp" />
-    <ClInclude Include="SplitScreenSystem.hpp" />
-    <ClInclude Include="Car.hpp" />
-    <ClInclude Include="CarAudio.hpp" />
-    <ClInclude Include="GameplayWork.hpp" />
+    <ClInclude Include="Car.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="CarAudio.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="CarCamera.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="CarController.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="GameplayWork.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="SplitScreenSystem.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="UIWidget.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="WaypointRegionBased.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="WaypointSystem.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="WaypointTriggerBased.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

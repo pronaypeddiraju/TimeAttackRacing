@@ -36,9 +36,18 @@ void Car::StartUp(const Vec3& startPosition, int controllerID)
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-void Car::Update(float deltaTime)
+void Car::Update(float deltaTime, bool isInputEnabled /*= true*/)
 {
-	m_controller->Update(deltaTime);
+	if (isInputEnabled)
+	{
+		m_controller->Update(deltaTime);
+	}
+	else
+	{
+		m_controller->ReleaseAllControls();
+		m_controller->m_controlReleased = true;
+	}
+	
 	m_audio->Update();
 
 	//Update the waypoint system

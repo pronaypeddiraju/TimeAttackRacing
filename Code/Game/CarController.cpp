@@ -388,3 +388,9 @@ void CarController::ReleaseVehicle()
 	PX_RELEASE(m_vehicle4W);
 }
 
+//------------------------------------------------------------------------------------------------------------------------------
+bool CarController::IsControlReleased()
+{
+	return m_controlReleased;
+}
+

@@ -294,6 +294,7 @@
       <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ShowIncludes>
     </ClCompile>
     <ClCompile Include="SplitScreenSystem.cpp" />
+    <ClCompile Include="UIWidget.cpp" />
     <ClCompile Include="WaypointRegionBased.cpp" />
     <ClCompile Include="WaypointSystem.cpp" />
     <ClCompile Include="WaypointTriggerBased.cpp" />
@@ -309,6 +310,7 @@
     <ClInclude Include="GameCommon.hpp" />
     <ClInclude Include="GameplayWork.hpp" />
     <ClInclude Include="SplitScreenSystem.hpp" />
+    <ClInclude Include="UIWidget.hpp" />
     <ClInclude Include="WaypointRegionBased.hpp" />
     <ClInclude Include="WaypointTriggerBased.hpp" />
     <ClInclude Include="WaypointSystem.hpp" />

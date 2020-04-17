@@ -297,11 +297,11 @@ void CarAudio::UpdateSimplexMultiTrack()
 				}
 			}
 		}
-// 		else if(currentGear == 0)
-// 		{
-// 			g_audio->SetSoundPlaybackSpeed(m_soundPlaybackIDs[currentGear], ratio);
-// 			g_audio->SetSoundPlaybackVolume(m_soundPlaybackIDs[currentGear], 0.5f);
-// 		}
+		else if(m_carControllerRef->IsControlReleased())
+		{
+			g_audio->SetSoundPlaybackSpeed(m_soundPlaybackIDs[currentGear], ratio);
+			g_audio->SetSoundPlaybackVolume(m_soundPlaybackIDs[currentGear], 0.f);
+		}
 	}
 
 	//DebuggerPrintf("\n Current Gear: %u", currentGear);

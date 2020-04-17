@@ -30,6 +30,8 @@
 #include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/TextureView.hpp"
 #include "Engine/Renderer/ObjectLoader.hpp"
+//Game Systems
+#include "Game/UIWidget.hpp"
 
 //------------------------------------------------------------------------------------------------------------------------------
 float g_shakeAmount = 0.0f;
@@ -72,9 +74,26 @@ void Game::StartUp()
 
 	LoadGameMaterials();
 
+	CreateUIWidgets();
+
 	g_devConsole->PrintString(Rgba::ORGANIC_BLUE, "This is the Dev Console");
 
 	CreateInitialLight();
+	SetupCameras();
+
+	SetupPhysX();
+
+	Vec3 camEuler = Vec3(-12.5f, -196.f, 0.f);
+	m_mainCamera->SetEuler(camEuler);
+
+	CreateInitialMeshes();
+	PerformAsyncLoading();
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::InitiateGameSequence()
+{
+	//called once when m_initiateFromMenu is set to true
 
 	//Call InputSystem frame to detect xBox controllers
 	g_inputSystem->BeginFrame();
@@ -83,64 +102,32 @@ void Game::StartUp()
 
 	//Setup the cars	
 	SetupCars();
-	SetupCameras();
-
-	PxPhysics* physX = g_PxPhysXSystem->GetPhysXSDK();
-	PxScene* pxScene = g_PxPhysXSystem->GetPhysXScene();
-
-	PxMaterial* pxMat;
-	pxMat = g_PxPhysXSystem->GetDefaultPxMaterial();
-
-	const float boxHalfHeight = 0.05f;
-	const float boxXZ = 1000.0f;
-	PxTransform t(PxVec3(0.f, boxHalfHeight, 0.f), PxQuat(PxIdentity));
-	PxRigidStatic* rs = physX->createRigidStatic(t);
-
-	PxBoxGeometry boxGeom(PxVec3(boxXZ, boxHalfHeight, boxXZ));
-	PxShape* shape = PxRigidActorExt::createExclusiveShape(*rs, boxGeom, *pxMat);
-
-	PxFilterData simFilterData(COLLISION_FLAG_OBSTACLE, COLLISION_FLAG_WHEEL, PxPairFlag::eMODIFY_CONTACTS | PxPairFlag::eDETECT_CCD_CONTACT, 0);
-	shape->setSimulationFilterData(simFilterData);
-	PxFilterData qryFilterData;
-	setupDrivableSurface(qryFilterData);
-	shape->setQueryFilterData(qryFilterData);
-
-	pxScene->addActor(*rs);
-
-	SetupPhysX();
-
-	Vec3 camEuler = Vec3(-12.5f, -196.f, 0.f);
-	m_mainCamera->SetEuler(camEuler);
 
 	CreateWayPoints();
 
-	//This is a test to check if quaternions work
-	PxQuat q = PhysXSystem::EulerAnglesToQuaternion(Vec3(0.2f, 1.12f, 2.31f));
-	Vec3 r = PhysXSystem::QuaternionToEulerAngles(q);
+	SetEnableXInput(true);
 
-	CreateInitialMeshes();
-	PerformAsyncLoading();
+	CreateBaseBoxForCollisionDetection();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::SetupCars()
 {
+	IntVec2 client = g_windowContext->GetTrueClientBounds();
+	float aspect = (float)client.x / (float)client.y;
+
 	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
 	{
 		m_cars[carIndex] = new Car();
 		m_cars[carIndex]->StartUp(m_startPositions[carIndex], carIndex);
 		m_cars[carIndex]->SetupCarAudio();
 
-// 		if (carIndex == 0)
-// 		{
-// 			m_cars[carIndex].SetupCarAudio();
-// 		}
-// 		else
-// 		{
-// 			CopyAudioIDsFromFirstCar(carIndex);
-// 			m_cars[carIndex].SetupNewPlaybackIDs();
-// 		}
+		m_cars[carIndex]->SetCameraColorTarget(nullptr);
+		m_cars[carIndex]->SetCameraPerspectiveProjection(m_camFOVDegrees, 0.1f, 1000.f, aspect);
+
+		m_splitScreenSystem.AddCarCameraForPlayer(m_cars[carIndex]->GetCarCameraEditable(), m_cars[carIndex]->GetCarIndex());
 	}
+
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -176,14 +163,6 @@ void Game::SetupCameras()
 	m_camPosition = Vec3(30.f, 30.f, 60.f);
 	m_mainCamera->SetColorTarget(nullptr);
 	m_mainCamera->SetPerspectiveProjection( m_camFOVDegrees, 0.1f, 1000.0f, aspect);
-
-	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
-	{
-		m_cars[carIndex]->SetCameraColorTarget(nullptr);
-		m_cars[carIndex]->SetCameraPerspectiveProjection(m_camFOVDegrees, 0.1f, 1000.f, aspect);
-
-		m_splitScreenSystem.AddCarCameraForPlayer(m_cars[carIndex]->GetCarCameraEditable(), m_cars[carIndex]->GetCarIndex());
-	}
 
 	m_UICamera->SetOrthoView(minWorldBounds, maxWorldBounds);
 	m_devConsoleCamera->SetOrthoView(minWorldBounds, maxWorldBounds);
@@ -380,6 +359,74 @@ void Game::SetupPhysX()
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+void Game::CreateUIWidgets()
+{
+	IntVec2 clientSize = g_windowContext->GetTrueClientBounds();
+
+	// Menu Widgets
+	m_menuParent = new UIWidget(this, nullptr);
+	m_menuParent->SetColor(Rgba(0.f, 0.f, 0.f, 0.f));
+	m_menuParent->UpdateBounds(AABB2(Vec2(0.f, 0.f), Vec2((float)clientSize.x, (float)clientSize.y)));
+
+	//Create the radio group
+	m_menuRadGroup = m_menuParent->CreateChild<UIRadioGroup>(m_menuParent->GetWorldBounds());
+
+	AABB2 bounds = AABB2(Vec2(0.f, 0.f), Vec2(30.f, 30.f));
+	Vec4 size = Vec4(0.1f, 0.1f, 0.f, 0.f);
+	Vec4 position = Vec4(0.f, 0.f, 0.f, 0.f);
+	//Create the Play Button
+	m_playButton = m_menuRadGroup->CreateChild<UIButton>(m_menuRadGroup->GetWorldBounds(), size, position);
+	m_playButton->SetOnClick("GoToGame");
+	m_playButton->SetColor(Rgba::WHITE);
+	m_playButton->unHovercolor = Rgba::WHITE;
+	m_playButton->SetRadioType(true);
+
+	//Create the Edit button
+	bounds = AABB2(Vec2(0.f, 0.f), Vec2(30.f, 30.f));
+	size = Vec4(0.1f, 0.1f, 0.f, 0.f);
+	position = Vec4(0.f, 0.f, 0.f, 0.f);
+
+	m_editButton = m_menuRadGroup->CreateChild<UIButton>(m_menuRadGroup->GetWorldBounds(), size, position);
+	m_editButton->SetOnClick("GoToEdit");
+	m_editButton->SetColor(Rgba::WHITE);
+	m_editButton->unHovercolor = Rgba::WHITE;
+	m_editButton->SetRadioType(true);
+
+	size = Vec4(1.f, .75f, 0.f, 0.f);
+	position = Vec4(0.5f, 0.5, 0.f, 0.f);
+
+	UILabel* label = m_playButton->CreateChild<UILabel>(m_playButton->GetWorldBounds(), size, position);
+	label->SetLabelText("PLAY");
+	label->SetColor(Rgba::WHITE);
+
+	label = m_editButton->CreateChild<UILabel>(m_editButton->GetWorldBounds(), size, position);
+	label->SetLabelText("EDIT");
+	label->SetColor(Rgba::WHITE);
+
+	//Age of emptiness
+	size = Vec4(0.4f, 0.45f, 0.f, 0.f);
+	position = Vec4(0.5f, 0.5f, 0.f, -120.f);
+
+	label = m_menuParent->CreateChild<UILabel>(m_menuParent->GetWorldBounds(), size, position);
+	label->SetLabelText("Age of Emptiness III");
+	label->SetColor(Rgba(0.f, 0.f, 0.f, 1.f));
+	
+	size = Vec4(0.4f, 0.4f, 0.f, 0.f);
+	position = Vec4(0.5f, 0.5f, 0.f, -117.f);
+
+	label = m_menuParent->CreateChild<UILabel>(m_menuParent->GetWorldBounds(), size, position);
+	label->SetLabelText("Age of Emptiness III");
+	label->SetColor(Rgba::WHITE);
+
+	size = Vec4(0.35f, 0.35f, 0.f, 0.f);
+	position = Vec4(0.5f, 0.5f, 0.f, -260.f);
+
+	label = m_menuParent->CreateChild<UILabel>(m_menuParent->GetWorldBounds(), size, position);
+	label->SetLabelText("A truly empty 3D experience");
+	label->SetColor(Rgba::DARK_GREY);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 void Game::PerformAsyncLoading()
 {
 	if (!m_threadedLoadComplete)
@@ -531,7 +578,7 @@ void Game::UpdateAllCars(float deltaTime)
 {
 	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
 	{
-		m_cars[carIndex]->Update(deltaTime);
+		m_cars[carIndex]->Update(deltaTime, m_isXInputEnabled);
 	}
 }
 
@@ -560,7 +607,7 @@ void Game::CheckForRaceCompletion()
 		//The race has completed so you can do some logic here
 		TODO("Write the best time to an XML File");
 
-		g_devConsole->PrintString(Rgba::GREEN, std::string("Race Complete for all players"));
+		HandleRaceCompletedCondition();
 	}
 }
 
@@ -891,6 +938,15 @@ void Game::HandleKeyPressed(unsigned char keyCode)
 			m_debugViewCarCollider = !m_debugViewCarCollider;
 			break;
 		}
+		case ENTER_KEY:
+		{
+			if (!m_initiateFromMenu)
+			{
+				m_initiateFromMenu = true;
+				InitiateGameSequence();
+			}
+		}
+		break;
 		default:
 		break;
 	}
@@ -906,6 +962,8 @@ void Game::DebugEnabled()
 void Game::Shutdown()
 {
 	//m_carController->ReleaseVehicle();
+
+	DeleteUI();
 
 	for (int i = 0; i < m_numConnectedPlayers; i++)
 	{
@@ -998,37 +1056,17 @@ bool Game::HandleMouseScroll(float wheelDelta)
 
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::Render() const
-{
-	if (!m_threadedLoadComplete)
-	{
-		return;
-	}
-	
-	//Get the ColorTargetView from rendercontext
-	ColorTargetView *colorTargetView = g_renderContext->GetFrameColorTarget();
-
-	//Setup what we are rendering to
-	m_mainCamera->SetColorTarget(colorTargetView);
-	m_mainCamera->SetViewport(Vec2(0.5f, 0.f), Vec2::ONE);
-	m_devConsoleCamera->SetColorTarget(colorTargetView);
-
-	m_splitScreenSystem.SetColorTargets(colorTargetView);
-	m_splitScreenSystem.ComputeViewPortSplits(eSplitMode::PREFER_VERTICAL_SPLIT);
-	SetupCarHUDsFromSplits();
-
-	m_UICamera->SetColorTarget(colorTargetView);
-	m_UICamera->SetViewport(Vec2::ZERO, Vec2::ONE);
+{	
+	//Set all the frame color targets for the cameras being used
+	SetFrameColorTargetOnCameras();
 
 	// Move the camera to where it is in the scene
 	Matrix44 camTransform = Matrix44::MakeFromEuler( m_mainCamera->GetEuler(), m_rotationOrder ); 
 	camTransform = Matrix44::SetTranslation3D(m_camPosition, camTransform);
 	m_mainCamera->SetModelMatrix(camTransform);
 	
-	float intensity = Clamp(m_ambientIntensity, 0.f, 1.f);
-	g_renderContext->SetAmbientLight(Rgba::WHITE, intensity);
-
-	float emissive = Clamp(m_emissiveFactor, 0.1f, 1.f);
-	g_renderContext->m_cpuLightBuffer.emissiveFactor = emissive;
+	SetAmbientIntensity();
+	SetEmissiveIntensity();
 
 	if (!m_enableDirectional)
 	{
@@ -1039,67 +1077,43 @@ void Game::Render() const
 		g_renderContext->EnableDirectionalLight();
 	}
 
+	//Should I render the menu screen?
+	if (!m_initiateFromMenu)
+	{
+		RenderMenuScreen();
+		return;
+	}
+
+	//Should I just return since my assets are not loaded
+	if (!m_threadedLoadComplete)
+	{
+		return;
+	}
+
 	if (ui_swapToMainCamera)
 	{
-		//For regular PhysX camera
-		g_renderContext->BeginCamera(*m_mainCamera); 
-
-		RenderRacetrack();
-
-		//Render the Quad
-		g_renderContext->BindMaterial(m_defaultMaterial);
-		g_renderContext->BindTextureViewWithSampler(0U, nullptr);
-		g_renderContext->SetModelMatrix(m_baseQuadTransform);
-		g_renderContext->DrawMesh(m_baseQuad);
-
-
-		for (int renderCarIndex = 0; renderCarIndex < m_numConnectedPlayers; renderCarIndex++)
-		{
-			RenderPhysXCar(m_cars[renderCarIndex]->GetCarController());
-		}
-
-		g_renderContext->EndCamera();
+		RenderScreenForMainCamera();
 	}
 	else
 	{
-		//For Car Camera view
-		for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
-		{
-			Car* car = const_cast<Car*>(m_cars[carIndex]);
-			g_renderContext->BeginCamera(*car->GetCarCameraEditable());
-
-			if (carIndex == 0)
-			{
-				//Only clear the color target view the first time
-				g_renderContext->ClearColorTargets(Rgba(ui_cameraClearColor[0], ui_cameraClearColor[1], ui_cameraClearColor[2], 1.f));
-			}
-
-			RenderRacetrack();
-
-			//Render the Quad
-			g_renderContext->BindMaterial(m_defaultMaterial);
-			g_renderContext->BindTextureViewWithSampler(0U, nullptr);
-			g_renderContext->SetModelMatrix(m_baseQuadTransform);
-			g_renderContext->DrawMesh(m_baseQuad);
-
-			//g_renderContext->SetModelMatrix(m_cars[carIndex].GetWaypoints().GetNextWaypointModelMatrix());
-			g_renderContext->SetModelMatrix(Matrix44::IDENTITY);
-			m_cars[carIndex]->GetWaypoints().RenderNextWaypoint();
-
-			for (int renderCarIndex = 0; renderCarIndex < m_numConnectedPlayers; renderCarIndex++)
-			{
-				RenderPhysXCar(m_cars[renderCarIndex]->GetCarController());
-			}
-
-			g_renderContext->EndCamera();
-
-			RenderGearNumber(carIndex);
-		}
-
+		RenderSceneForCarCameras();
 	}
 
+	//Perform all UI Draws
+	m_UICamera->SetViewport(Vec2::ZERO, Vec2::ONE);
+	m_UICamera->SetModelMatrix(Matrix44::IDENTITY);
+
+	g_renderContext->BeginCamera(*m_UICamera);
+	g_renderContext->BindShader(m_shader);
+
 	RenderDebugInfoOnScreen();
-	RenderUITest();
+
+	g_renderContext->EndCamera();
+
+	if (m_isRaceCompleted)
+	{
+		RenderRaceCompleted();
+	}
 
 	if (g_devConsole->IsOpen())
 	{
@@ -1350,15 +1364,86 @@ void Game::RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numAct
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-void Game::RenderUITest() const
+void Game::RenderMainMenu() const
 {
-	g_renderContext->BindTextureViewWithSampler(0U, nullptr);
+	IntVec2 clientSize = g_windowContext->GetTrueClientBounds();
 
+	//Render the Menu UI 
+	m_menuParent->UpdateBounds(AABB2(Vec2(0.f, 0.f), Vec2((float)clientSize.x, (float)clientSize.y)));
+
+	m_menuParent->Render();	
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::RenderMenuScreen() const
+{
 	m_UICamera->SetViewport(Vec2::ZERO, Vec2::ONE);
 	m_UICamera->SetModelMatrix(Matrix44::IDENTITY);
 
 	g_renderContext->BeginCamera(*m_UICamera);
 	g_renderContext->BindShader(m_shader);
+
+	g_renderContext->BindTextureViewWithSampler(0U, nullptr);
+
+	Vec2 camMinBounds = m_UICamera->GetOrthoBottomLeft();
+	Vec2 camMaxBounds = m_UICamera->GetOrthoTopRight();
+
+	//Draw a background image
+	std::vector<Vertex_PCU> backgroundImageVerts;
+	g_renderContext->BindTextureViewWithSampler(0U, nullptr);
+	AddVertsForAABB2D(backgroundImageVerts, AABB2(camMinBounds, camMaxBounds), Rgba::WHITE);
+	g_renderContext->DrawVertexArray(backgroundImageVerts);
+
+	//Draw a join message
+	std::string printString = "Press RETURN to start game!";
+	Vec2 textBoxOffset = Vec2(400.f, 25.f);
+	std::vector<Vertex_PCU> textVerts;
+	m_squirrelFont->AddVertsForTextInBox2D(textVerts, AABB2(camMaxBounds * 0.5f - textBoxOffset , camMaxBounds * 0.5f + textBoxOffset), m_menuFontHeight, printString, Rgba::RED);
+	//m_squirrelFont->AddVertsForText2D(textVerts, Vec2(0.f, 0.f), m_fontHeight, printString, Rgba::RED);
+
+	g_renderContext->BindTextureViewWithSampler(0U, m_squirrelFont->GetTexture(), SAMPLE_MODE_POINT);
+	g_renderContext->DrawVertexArray(textVerts);
+
+	g_renderContext->EndCamera();
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::RenderRaceCompleted() const
+{
+	m_UICamera->SetViewport(Vec2::ZERO, Vec2::ONE);
+	m_UICamera->SetModelMatrix(Matrix44::IDENTITY);
+
+	g_renderContext->BeginCamera(*m_UICamera);
+	g_renderContext->BindShader(m_shader);
+
+	g_renderContext->BindTextureViewWithSampler(0U, nullptr);
+
+	Vec2 camMinBounds = m_UICamera->GetOrthoBottomLeft();
+	Vec2 camMaxBounds = m_UICamera->GetOrthoTopRight();
+
+	//Draw a screen Overlay
+	std::vector<Vertex_PCU> backgroundImageVerts;
+	g_renderContext->BindTextureViewWithSampler(0U, nullptr);	
+	AddVertsForAABB2D(backgroundImageVerts, AABB2(camMinBounds, camMaxBounds), Rgba(0.f, 0.f, 0.f, 0.45f));
+	g_renderContext->DrawVertexArray(backgroundImageVerts);
+
+	//Draw a join message
+	std::string printString = "Press R to Restart the game";
+	Vec2 textBoxOffset = Vec2(400.f, 25.f);
+	std::vector<Vertex_PCU> textVerts;
+	m_squirrelFont->AddVertsForTextInBox2D(textVerts, AABB2(camMaxBounds * 0.5f - textBoxOffset, camMaxBounds * 0.5f + textBoxOffset), m_menuFontHeight, printString, Rgba::RED);
+	//m_squirrelFont->AddVertsForText2D(textVerts, Vec2(0.f, 0.f), m_fontHeight, printString, Rgba::RED);
+
+	g_renderContext->BindTextureViewWithSampler(0U, m_squirrelFont->GetTexture(), SAMPLE_MODE_POINT);
+	g_renderContext->DrawVertexArray(textVerts);
+
+	g_renderContext->EndCamera();
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::RenderUITest() const
+{
+	g_renderContext->BindTextureViewWithSampler(0U, nullptr);
 
 	Vec2 camMinBounds = m_UICamera->GetOrthoBottomLeft();
 	Vec2 camMaxBounds = m_UICamera->GetOrthoTopRight();
@@ -1370,16 +1455,11 @@ void Game::RenderUITest() const
 
 	g_renderContext->BindTextureViewWithSampler(0U, m_squirrelFont->GetTexture());
 	g_renderContext->DrawVertexArray(textVerts);
-
-	g_renderContext->EndCamera();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::RenderDebugInfoOnScreen() const
 {
-	g_renderContext->BeginCamera(*m_UICamera);
-	g_renderContext->BindShader(m_shader);
-
 	Vec2 camMinBounds = m_UICamera->GetOrthoBottomLeft();
 	Vec2 camMaxBounds = m_UICamera->GetOrthoTopRight();
 
@@ -1418,9 +1498,6 @@ void Game::RenderDebugInfoOnScreen() const
 	textVerts.clear();
 	m_squirrelFont->AddVertsForText2D(textVerts, displayArea, m_fontHeight, printString, Rgba::WHITE);
 	g_renderContext->DrawVertexArray(textVerts);
-
-
-	g_renderContext->EndCamera();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1432,6 +1509,149 @@ void Game::SetupCarHUDsFromSplits() const
 		Camera& carHUD = m_cars[carIndex]->GetCarHUDCamera();
 		TODO("Make UI ortho splits based on the viewports assigned to the SplitScreen System");
 	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::DeleteUI()
+{
+	delete m_menuParent;
+	m_menuParent = nullptr;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::CreateBaseBoxForCollisionDetection()
+{
+	PxPhysics* physX = g_PxPhysXSystem->GetPhysXSDK();
+	PxScene* pxScene = g_PxPhysXSystem->GetPhysXScene();
+
+	PxMaterial* pxMat;
+	pxMat = g_PxPhysXSystem->GetDefaultPxMaterial();
+
+	const float boxHalfHeight = 0.05f;
+	const float boxXZ = 1000.0f;
+	PxTransform t(PxVec3(0.f, boxHalfHeight, 0.f), PxQuat(PxIdentity));
+	PxRigidStatic* rs = physX->createRigidStatic(t);
+
+	PxBoxGeometry boxGeom(PxVec3(boxXZ, boxHalfHeight, boxXZ));
+	PxShape* shape = PxRigidActorExt::createExclusiveShape(*rs, boxGeom, *pxMat);
+
+	PxFilterData simFilterData(COLLISION_FLAG_OBSTACLE, COLLISION_FLAG_WHEEL, PxPairFlag::eMODIFY_CONTACTS | PxPairFlag::eDETECT_CCD_CONTACT, 0);
+	shape->setSimulationFilterData(simFilterData);
+	PxFilterData qryFilterData;
+	setupDrivableSurface(qryFilterData);
+	shape->setQueryFilterData(qryFilterData);
+
+	pxScene->addActor(*rs);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::SetMeshesAndJoinThreads()
+{
+	m_carModel = g_renderContext->CreateOrGetMeshFromFile(m_carMeshPath);
+	m_wheelModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelMeshPath);
+	m_wheelFlippedModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelFlippedMeshPath);
+
+	m_trackTestModel = g_renderContext->CreateOrGetMeshFromFile(m_trackTestPath);
+	m_trackCollidersTestModel = g_renderContext->CreateOrGetMeshFromFile(m_trackCollisionsTestPath);
+
+	for (std::thread& threadHandle : m_threads)
+	{
+		threadHandle.join();
+	}
+
+	m_threads.clear();
+
+	m_threadedLoadComplete = true;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::HandleRaceCompletedCondition()
+{
+	//Disable all user input from Xbox controller (Nice effect where the cars just keep going with their momentum)
+	SetEnableXInput(false);
+	//Enable the render method for race completion
+	m_isRaceCompleted = true;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::SetEnableXInput(bool isEnabled /*= true*/)
+{
+	m_isXInputEnabled = isEnabled;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::RenderSceneForCarCameras() const
+{
+	//For Car Camera view
+	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
+	{
+		Car* car = const_cast<Car*>(m_cars[carIndex]);
+		g_renderContext->BeginCamera(*car->GetCarCameraEditable());
+
+		if (carIndex == 0)
+		{
+			//Only clear the color target view the first time
+			g_renderContext->ClearColorTargets(Rgba(ui_cameraClearColor[0], ui_cameraClearColor[1], ui_cameraClearColor[2], 1.f));
+		}
+
+		RenderRacetrack();
+
+		//Render the Quad
+		g_renderContext->BindMaterial(m_defaultMaterial);
+		g_renderContext->BindTextureViewWithSampler(0U, nullptr);
+		g_renderContext->SetModelMatrix(m_baseQuadTransform);
+		g_renderContext->DrawMesh(m_baseQuad);
+
+		//g_renderContext->SetModelMatrix(m_cars[carIndex].GetWaypoints().GetNextWaypointModelMatrix());
+		g_renderContext->SetModelMatrix(Matrix44::IDENTITY);
+		m_cars[carIndex]->GetWaypoints().RenderNextWaypoint();
+
+		for (int renderCarIndex = 0; renderCarIndex < m_numConnectedPlayers; renderCarIndex++)
+		{
+			RenderPhysXCar(m_cars[renderCarIndex]->GetCarController());
+		}
+
+		g_renderContext->EndCamera();
+
+		RenderGearNumber(carIndex);
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------]
+void Game::RenderScreenForMainCamera() const
+{
+	//For regular PhysX camera
+	g_renderContext->BeginCamera(*m_mainCamera);
+
+	RenderRacetrack();
+
+	//Render the Quad
+	g_renderContext->BindMaterial(m_defaultMaterial);
+	g_renderContext->BindTextureViewWithSampler(0U, nullptr);
+	g_renderContext->SetModelMatrix(m_baseQuadTransform);
+	g_renderContext->DrawMesh(m_baseQuad);
+
+
+	for (int renderCarIndex = 0; renderCarIndex < m_numConnectedPlayers; renderCarIndex++)
+	{
+		RenderPhysXCar(m_cars[renderCarIndex]->GetCarController());
+	}
+
+	g_renderContext->EndCamera();
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::SetAmbientIntensity() const
+{
+	float intensity = Clamp(m_ambientIntensity, 0.f, 1.f);
+	g_renderContext->SetAmbientLight(Rgba::WHITE, intensity);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::SetEmissiveIntensity() const
+{
+	float emissive = Clamp(m_emissiveFactor, 0.1f, 1.f);
+	g_renderContext->m_cpuLightBuffer.emissiveFactor = emissive;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1654,6 +1874,29 @@ void Game::AddMeshForConvexMesh(CPUMesh& cvxMesh, const PxRigidActor& actor, con
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+void Game::SetFrameColorTargetOnCameras() const
+{
+	//Get the ColorTargetView from rendercontext
+	ColorTargetView *colorTargetView = g_renderContext->GetFrameColorTarget();
+
+	//Setup what we are rendering to
+	m_mainCamera->SetColorTarget(colorTargetView);
+	m_mainCamera->SetViewport(Vec2(0.5f, 0.f), Vec2::ONE);
+	m_devConsoleCamera->SetColorTarget(colorTargetView);
+
+	m_UICamera->SetColorTarget(colorTargetView);
+	m_UICamera->SetViewport(Vec2::ZERO, Vec2::ONE);
+
+	if (m_initiateFromMenu)
+	{
+		//The cars exist and we can set the split screen system's color targets
+		m_splitScreenSystem.SetColorTargets(colorTargetView);
+		m_splitScreenSystem.ComputeViewPortSplits(eSplitMode::PREFER_VERTICAL_SPLIT);
+		SetupCarHUDsFromSplits();
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 void Game::DebugRenderToScreen() const
 {
 	Camera& debugCamera = g_debugRenderer->Get2DCamera();
@@ -1753,30 +1996,10 @@ void Game::Update(float deltaTime)
 	if (m_numConnectedPlayers == 0)
 		return;	//Currently unsupported for keyboard input
 
-	if (m_threadedLoadComplete)
-	{
-		//Once everything is loaded we want to start calculation
-		PerformFPSCachingAndCalculation(deltaTime);
-	}
-
-
+	//Finishing up with the loading threads and work
 	if (IsFinishedImageLoading() && IsFinishedModelLoading() && !m_threadedLoadComplete)
 	{
-		m_carModel = g_renderContext->CreateOrGetMeshFromFile(m_carMeshPath);
-		m_wheelModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelMeshPath);
-		m_wheelFlippedModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelFlippedMeshPath);
-		 
-		m_trackTestModel = g_renderContext->CreateOrGetMeshFromFile(m_trackTestPath);
-		m_trackCollidersTestModel = g_renderContext->CreateOrGetMeshFromFile(m_trackCollisionsTestPath);
-
-		for (std::thread& threadHandle : m_threads)
-		{
-			threadHandle.join();
-		}
-
-		m_threads.clear();
-
-		m_threadedLoadComplete = true;
+		SetMeshesAndJoinThreads();
 	}
 	else if (!m_threadedLoadComplete)
 	{
@@ -1785,11 +2008,13 @@ void Game::Update(float deltaTime)
 		return;
 	}
 
-	//HandleMouseInputs(deltaTime);
+	if (m_threadedLoadComplete)
+	{
+		//Once everything is loaded we want to start calculation
+		PerformFPSCachingAndCalculation(deltaTime);
+	}
 
 	g_renderContext->m_frameCount++;
-
-	m_animTime += deltaTime;
 	float currentTime = static_cast<float>(GetCurrentTimeSeconds());
 
 	//Update the camera's transform
@@ -1798,9 +2023,7 @@ void Game::Update(float deltaTime)
 	m_mainCamera->SetModelMatrix(camTransform);
 
 	m_racetrackTransform = Matrix44::SetTranslation3D(m_racetrackTranslation, m_racetrackTransform);
-
 	m_trackTestTransform = Matrix44::SetTranslation3D(m_trackTestTranslation, m_trackTestTransform);
-
 	UpdateImGUI();
 
 	UpdateAllCars(deltaTime);

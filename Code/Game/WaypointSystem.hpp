@@ -45,7 +45,7 @@ private:
 	std::vector<WaypointRegionBased> m_waypointList;
 	uint					m_crossedIndex = UINT_MAX;	//This is Uint max. I'm not stupid this was on purpose
 	uint					m_lapIndex = 1;
-	uint					m_maxLaps = 3;
+	uint					m_maxLaps = 1;
 
 	bool					m_lapsCompleted = false;
 

@@ -49,6 +49,7 @@ public:
 
 	void	ReleaseAllControls();
 	void	ReleaseVehicle();
+	bool	IsControlReleased();
 private:
 
 	int			m_controllerID = 0;
@@ -61,6 +62,8 @@ private:
 	PxVehicleDrive4WRawInputData*		m_vehicleInputData = nullptr;
 
 public:
+	bool								m_controlReleased = false;
+
 	PxFixedSizeLookupTable<8>			m_SteerVsForwardSpeedTable;
 	PxVehicleKeySmoothingData			m_keySmoothingData =
 	{

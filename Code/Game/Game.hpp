@@ -40,6 +40,9 @@ class SpriteAnimDefenition;
 class CPUMesh;
 class GPUMesh;
 class Model;
+class UIWidget;
+class UIRadioGroup;
+class UIButton;
 
 struct Camera;
 
@@ -108,6 +111,7 @@ public:
 private:
 
 	//Initial Setups
+	void								InitiateGameSequence();
 	void								SetupCars();
 	void								SetupMouseData();
 	void								SetupCameras();
@@ -117,6 +121,9 @@ private:
 	void								CreateInitialMeshes();
 	void								CreateInitialLight();
 	void								SetupPhysX();
+	void								CreateUIWidgets();
+
+	void								CreateBaseBoxForCollisionDetection();
 
 	//Async Functionality 
 	void								PerformAsyncLoading();
@@ -124,6 +131,7 @@ private:
 	void								ModelLoadThread();
 	void								FinishReadyModels();
 	bool								IsFinishedModelLoading() const;
+	void								SetMeshesAndJoinThreads();
 
 	void								ImageLoadThread();
 	void								StartLoadingImage(std::string fileName);
@@ -135,6 +143,9 @@ private:
 	void								UpdateAllCars(float deltaTime);
 	void								CheckForRaceCompletion();
 
+	void								HandleRaceCompletedCondition();
+	void								SetEnableXInput(bool isEnabled = true);
+
 	//Drawing Utilities for PhysX Shapes
 	Rgba								GetColorForGeometry(int type, bool isSleeping) const;
 	void								AddMeshForPxCube(CPUMesh& boxMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
@@ -143,15 +154,27 @@ private:
 	void								AddMeshForConvexMesh(CPUMesh& cvxMesh, const PxRigidActor& actor, const PxShape& shape, const Rgba& color) const;
 
 	//Render Functions
+	void								SetFrameColorTargetOnCameras() const;
+	void								SetAmbientIntensity() const;
+	void								SetEmissiveIntensity() const;
+
 	void								DebugRenderToScreen() const;
 	void								DebugRenderToCamera() const;
 
 	void								RenderRacetrack() const;
 	void								RenderUsingMaterial() const;
 
+	void								RenderSceneForCarCameras() const;
+	void								RenderScreenForMainCamera() const;
+
 	void								RenderPhysXScene() const;
 	void								RenderPhysXCar(const CarController& carController) const;
 	void								RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numActors, Rgba& color) const;
+
+	//Rendering for Menus
+	void								RenderMainMenu() const;	//Uses UIWidget and widget system
+	void								RenderMenuScreen() const;
+	void								RenderRaceCompleted() const;
 
 	void								RenderUITest() const;
 	void								RenderDebugInfoOnScreen() const;
@@ -159,17 +182,18 @@ private:
 	void								RenderGearNumber(int carIndex) const;
 
 	void								SetupCarHUDsFromSplits() const;
+
+	//Shutdown utils
+	void								DeleteUI();
+
 private:
 	bool								m_isGameAlive = false;
 	bool								m_consoleDebugOnce = false;
 	bool								m_devConsoleSetup = false;
 	bool								m_isDebugSetup = false;
+	bool								m_isXInputEnabled = false;
+	bool								m_isRaceCompleted = false;
 	float								m_cameraSpeed = 0.3f; 
-
-	//CarController*						m_carController = nullptr;
-	//CarController*						m_player2CarController = nullptr;
-
-	//float								m_anotherTestTempHackStackZ = 20.f;	//20 is good I guess?
 
 	float								m_deltaTime = 0.f;
 	float								m_fpsCache[1000] = {0.f};
@@ -243,7 +267,8 @@ public:
 	Camera*								m_UICamera = nullptr;
 
 	AABB2								m_UIBounds;
-	float								m_fontHeight = 50.0f;
+	float								m_fontHeight = 20.0f;
+	float								m_menuFontHeight = 50.f;
 
 	Rgba*								m_clearScreenColor = nullptr;
 	
@@ -327,6 +352,18 @@ public:
 	float								ui_racetrackTranslation[3] = { 0.f, 0.f, 0.f };
 
 	bool								ui_enableConvexHullRenders = false;
+
+	//------------------------------------------------------------------------------------------------------------------------------
+	// Game Menu variables
+	//------------------------------------------------------------------------------------------------------------------------------
+	//UI References
+	UIWidget*							m_menuParent = nullptr;
+	UIRadioGroup*						m_menuRadGroup = nullptr;
+	UIButton*							m_playButton = nullptr;
+	UIButton*							m_editButton = nullptr;
+
+	bool								m_initiateFromMenu = false;
+
 
 	//------------------------------------------------------------------------------------------------------------------------------
 	// PhysX Test Variables
