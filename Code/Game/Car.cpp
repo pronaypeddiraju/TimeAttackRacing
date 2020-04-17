@@ -1,4 +1,5 @@
 #include "Game/Car.hpp"
+#include "Engine/Math/MathUtils.hpp"
 
 //------------------------------------------------------------------------------------------------------------------------------
 Car::Car()
@@ -175,13 +176,40 @@ double Car::GetRaceTime()
 //------------------------------------------------------------------------------------------------------------------------------
 void Car::ResetCarPosition()
 {
-	Vec3 vehiclePosition = m_controller->GetVehiclePosition();
-	Vec3 vehicleForward = m_controller->GetVehicleForwardBasis();
-	Vec3 vehicleRight = m_controller->GetVehicleRightBasis();
+	//Vec3 vehiclePosition = m_controller->GetVehiclePosition();
+	PxTransform transform = m_controller->GetVehicle()->getRigidDynamicActor()->getGlobalPose();
 
-	PxQuat q = PhysXSystem::MakeQuaternionFromVectors(vehicleForward, Vec3::FORWARD);
+	Matrix44 vehicleMatrix = PhysXSystem::MakeMatrixFromQuaternion(transform.q, transform.p);
 
-	m_controller->SetVehicleTransform(vehiclePosition, q);
+	vehicleMatrix.MakeXRotationDegrees(0.f);
+	vehicleMatrix.MakeZRotationDegrees(0.f);
+	vehicleMatrix.SetTranslation3D(Vec3(transform.p.x, transform.p.y + m_resetHeight, transform.p.z), vehicleMatrix);
+
+	PxQuat resultQuaternion = PhysXSystem::MakeQuaternionFromMatrix(vehicleMatrix);
+
+	transform.q = resultQuaternion;
+	Vec3 position = vehicleMatrix.GetTBasis();
+
+	transform.p = PhysXSystem::VecToPxVector(position);
+
+	m_controller->SetVehicleTransform(transform);
+
+// 	Vec3 vehicleForward = m_controller->GetVehicleForwardBasis();
+// 
+// 
+// 	Vec3 forwardOnZXPlane = vehicleForward;
+// 	forwardOnZXPlane.y = 0.f;
+// 	forwardOnZXPlane.Normalize();
+// 	//Set (y) on forward vector to 0
+// 	//Re-normalize forward
+// 
+// 	Vec3 vehicleRight = m_controller->GetVehicleRightBasis();
+// 
+// 	PxQuat q = PhysXSystem::MakeQuaternionFromVectors(vehicleForward, forwardOnZXPlane);
+// 
+// 	//Move up by some amount
+// 	vehiclePosition.y += m_resetHeightAdd;
+// 	m_controller->SetVehicleTransform(vehiclePosition, q);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

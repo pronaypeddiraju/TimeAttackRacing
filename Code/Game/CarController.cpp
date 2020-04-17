@@ -243,6 +243,12 @@ void CarController::SetVehicleTransform(const Vec3& targetPosition, const PxQuat
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+void CarController::SetVehicleTransform(const PxTransform& transform)
+{
+	m_vehicle4W->getRigidDynamicActor()->setGlobalPose(transform);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 physx::PxVehicleDrive4W* CarController::GetVehicle() const
 {
 	return m_vehicle4W;

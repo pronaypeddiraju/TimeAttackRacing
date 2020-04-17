@@ -21,7 +21,7 @@ struct ModelLoadWork
 	ModelLoadWork(const std::string& fileName);
 	~ModelLoadWork();
 
-	std::string modelName;
+	std::string modelName = "";
 	CPUMesh* mesh = nullptr;
 	Model* model = nullptr;
 	std::string materialPath = "";

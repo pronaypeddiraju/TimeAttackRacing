@@ -100,6 +100,7 @@ public:
 	void								UpdateCarCamera(float deltaTime);
 	void								UpdateImGUIPhysXWidget();
 	void								UpdateImGUIDebugWidget();
+	void								UpdateImGUIVehicleTool();
 	void								UpdateLightPositions();
 	
 	bool								IsAlive();

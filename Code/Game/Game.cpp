@@ -1098,7 +1098,8 @@ void Game::Render() const
 
 	}
 
-	//RenderUITest();
+	RenderDebugInfoOnScreen();
+	RenderUITest();
 
 	if (g_devConsole->IsOpen())
 	{
@@ -1382,7 +1383,7 @@ void Game::RenderDebugInfoOnScreen() const
 	Vec2 camMinBounds = m_UICamera->GetOrthoBottomLeft();
 	Vec2 camMaxBounds = m_UICamera->GetOrthoTopRight();
 
-	g_renderContext->BindTextureViewWithSampler(0U, m_squirrelFont->GetTexture());
+	g_renderContext->BindTextureViewWithSampler(0U, m_squirrelFont->GetTexture(), SAMPLE_MODE_POINT);
 
 	Vec2 displayArea = Vec2::ZERO;
 	displayArea.y = camMaxBounds.y - m_fontHeight;
@@ -1749,11 +1750,13 @@ void Game::PerformFPSCachingAndCalculation(float deltaTime)
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::Update(float deltaTime)
 {
+	if (m_numConnectedPlayers == 0)
+		return;	//Currently unsupported for keyboard input
+
 	if (m_threadedLoadComplete)
 	{
 		//Once everything is loaded we want to start calculation
 		PerformFPSCachingAndCalculation(deltaTime);
-		RenderDebugInfoOnScreen();
 	}
 
 
@@ -1930,6 +1933,25 @@ void Game::UpdateImGUIDebugWidget()
 	m_racetrackTranslation.x = ui_racetrackTranslation[0];
 	m_racetrackTranslation.y = ui_racetrackTranslation[1];
 	m_racetrackTranslation.z = ui_racetrackTranslation[2];
+
+	ImGui::End();
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::UpdateImGUIVehicleTool()
+{
+	//Tool for car here
+	ImGui::Begin("PhysX Vehicle Tool");
+
+	//ImGui::ColorEdit3("Scene Background Color", (float*)&ui_cameraClearColor); // Edit 3 floats representing a color
+	ImGui::DragFloat3("Light Direction", ui_dirLight);
+	ImGui::Checkbox("Enable Debug Camera", &ui_swapToMainCamera);
+	ImGui::DragFloat3("Track Translation", ui_racetrackTranslation);
+	
+	//ImGui::DragFloat3("Car Position", (float*)&position);
+
+	ImGui::Checkbox("Enable Convex Hull Debug", &ui_enableConvexHullRenders);
+	ImGui::Checkbox("Enable Car Debug", &ui_enableCarDebug);
 
 	ImGui::End();
 }

@@ -75,5 +75,5 @@ private:
 	BitmapFont*					m_HUDFont = nullptr;
 
 	double						m_raceTime = 0.0f;
-
+	float						m_resetHeight = 2.0f;
 };

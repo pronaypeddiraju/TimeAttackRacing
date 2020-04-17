@@ -25,6 +25,7 @@ public:
 	//Vehicle Setter
 	void						SetVehiclePosition(const Vec3& targetPosition);
 	void						SetVehicleTransform(const Vec3& targetPosition, const PxQuat& quaternion);
+	void						SetVehicleTransform(const PxTransform& transform);
 
 	//Vehicle Getters
 	PxVehicleDrive4W*			GetVehicle() const;
