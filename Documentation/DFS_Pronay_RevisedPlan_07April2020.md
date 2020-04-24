@@ -41,8 +41,16 @@ Notes about this document:
 	-	[ ] (04/00/2020) Implement a car HUD  (NewTask ID: 6)
 	-	[ ] (04/00/2020) Tune the car (NewTask ID: 7)
 
+	-	[5] Simple Menu
+	-	[4] PhysX bug on car (Un-solved)
+	-	[4] Quaternion bugs on reset
+	-	[9] Car Tool 
+	- 	[3] Car Tuning
+
+Total: 25 hours
+
 Total Hours Planned: 14 Hours
-Total Hours Worked: X Hours
+Total Hours Worked: 25 Hours
 
 ## WEEK 13: TRACK REFINEMENT AND PLAYER CONVEYANCE
 

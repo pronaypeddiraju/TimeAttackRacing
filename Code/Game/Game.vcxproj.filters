@@ -49,6 +49,9 @@
     <ClCompile Include="UIWidget.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
+    <ClCompile Include="CarTool.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.hpp">
@@ -91,6 +94,9 @@
       <Filter>Gameplay</Filter>
     </ClInclude>
     <ClInclude Include="WaypointTriggerBased.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="CarTool.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
   </ItemGroup>

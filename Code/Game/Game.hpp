@@ -18,6 +18,7 @@
 #include "Game/SplitScreenSystem.hpp"
 #include "Game/Car.hpp"
 #include "Game/GameplayWork.hpp"
+#include "Game/CarTool.hpp"
 //Third Party
 #include "extensions/PxDefaultAllocator.h"
 #include "extensions/PxDefaultCpuDispatcher.h"
@@ -101,9 +102,11 @@ public:
 	void								PerformFPSCachingAndCalculation(float deltaTime);
 	void								UpdatePhysXCar(float deltaTime);
 	void								UpdateCarCamera(float deltaTime);
+	
 	void								UpdateImGUIPhysXWidget();
 	void								UpdateImGUIDebugWidget();
 	void								UpdateImGUIVehicleTool();
+	
 	void								UpdateLightPositions();
 	
 	bool								IsAlive();
@@ -117,18 +120,24 @@ private:
 	void								SetupCameras();
 	void								GetandSetShaders();
 	void								LoadGameTextures();
+	void								LoadGameTexturesThreaded();
 	void								LoadGameMaterials();
 	void								CreateInitialMeshes();
 	void								CreateInitialLight();
 	void								SetupPhysX();
 	void								CreateUIWidgets();
 
+	void								PerformSingleThreadLoading();
+	void								LoadTrackMeshesOnSceneCreation();
+
 	void								CreateBaseBoxForCollisionDetection();
+	void								ResetCarsUsingToolData();
+	void								ReadBestTimeFromFile();
 
 	//Async Functionality 
 	void								PerformAsyncLoading();
-	void								StartLoadingModel(std::string fileName);
-	void								ModelLoadThread();
+	void								EnqueueLoadingModel(std::string fileName);
+	void								LoadModelsFromThread();
 	void								FinishReadyModels();
 	bool								IsFinishedModelLoading() const;
 	void								SetMeshesAndJoinThreads();
@@ -176,6 +185,7 @@ private:
 	void								RenderMenuScreen() const;
 	void								RenderRaceCompleted() const;
 
+	void								AddVertsForPlayerTimesInOrder(std::vector<Vertex_PCU>& timeVerts) const;
 	void								RenderUITest() const;
 	void								RenderDebugInfoOnScreen() const;
 
@@ -184,6 +194,7 @@ private:
 	void								SetupCarHUDsFromSplits() const;
 
 	//Shutdown utils
+	void								WriteNewBestTime();
 	void								DeleteUI();
 
 private:
@@ -217,7 +228,7 @@ public:
 	TextureView*						m_textureTest = nullptr;
 	TextureView*						m_boxTexture = nullptr;
 	TextureView*						m_sphereTexture = nullptr;
-	BitmapFont*							m_squirrelFont = nullptr;
+	BitmapFont*							m_menuFont = nullptr;
 	Image*								m_testImage = nullptr;
 	float								m_animTime = 0.f;
 
@@ -375,7 +386,7 @@ public:
 	GPUMesh*							m_pxConvexMesh = nullptr;
 	GPUMesh*							m_pxCapMesh = nullptr;
 
-	bool								m_debugViewCarCollider = false;
+	bool								m_debugViewCarCollider = true;
 
 	Vec3								m_wayPointPositions[5] = { Vec3(15.f, 0.f, 10.f),
 																	Vec3(40.f, 0.f, 85.f),
@@ -404,9 +415,15 @@ public:
 	//Save File data
 	double								m_bestTimeFromFile = 0.0;
 	double								m_bestTimeForRun = 0.0;
+	std::string							m_saveFilePath = "Data/Gameplay/SaveFile.xml";
 
 	//------------------------------------------------------------------------------------------------------------------------------
 	// Split Screen System
 	//------------------------------------------------------------------------------------------------------------------------------
 	SplitScreenSystem					m_splitScreenSystem;
+
+	//------------------------------------------------------------------------------------------------------------------------------
+	// Vehicle Tool
+	//------------------------------------------------------------------------------------------------------------------------------
+	CarTool								m_carTool;
 };

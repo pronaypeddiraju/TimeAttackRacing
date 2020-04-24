@@ -209,7 +209,7 @@ void CarController::VehiclePhysicsUpdate(float deltaTime)
 	PxVehicleUpdates(deltaTime, grav, *tireFrictionPairs, numVehicles, vehicleWheels, vehicleQueryResults);
 
 	//Work out if the vehicle is in the air.
-	m_isVehicleInAir = vehicle4W->getRigidDynamicActor()->isSleeping() ? false : PxVehicleIsInAir(vehicleQueryResults[0]);
+	//m_isVehicleInAir = vehicle4W->getRigidDynamicActor()->isSleeping() ? false : PxVehicleIsInAir(vehicleQueryResults[0]);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -246,6 +246,15 @@ void CarController::SetVehicleTransform(const Vec3& targetPosition, const PxQuat
 void CarController::SetVehicleTransform(const PxTransform& transform)
 {
 	m_vehicle4W->getRigidDynamicActor()->setGlobalPose(transform);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void CarController::SetNewPxVehicle(PxVehicleDrive4W* vehicle)
+{
+	//Assumes the previous reference was freed/safely released
+	m_vehicle4W = vehicle;
+	m_vehicle4W->getRigidDynamicActor()->clearForce();
+	m_vehicle4W->getRigidDynamicActor()->clearTorque();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -380,6 +389,17 @@ void CarController::ReleaseAllControls()
 		m_vehicleInputData->setAnalogBrake(0.0f);
 		m_vehicleInputData->setAnalogHandbrake(0.0f);
 	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void CarController::RemoveVehicleFromScene()
+{
+	PxScene* scene = g_PxPhysXSystem->GetPhysXScene();
+
+	scene->removeActor(*m_vehicle4W->getRigidDynamicActor());
+	m_vehicle4W->getRigidDynamicActor()->release();
+
+	PX_RELEASE(m_vehicle4W);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

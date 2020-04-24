@@ -118,8 +118,12 @@ Total Hours Worked: X Hours
 Enter the actual house used here as well as the date you worked on this task in the only correct date format (DD/MM/YYYY). Fight me on date format.
 
 	-	[ ] (00/03/2020) Implement Car Tuning Tool (Task ID: 7)
-	-	[ ] (00/03/2020) Async Resource Loader (Task ID: 8)
+	-	[3] (00/03/2020) Async Resource Loader (Task ID: 8)
 	-	[ ] (00/03/2020) Make Game Menus (Task ID: 9)
+	-	[2] Debug Task for Car values (Multiple car data retrieval was not correct)
+	-	[4] Fixing timing on waypoint system on End of Race
+
+Total : 
 
 Total Hours Planned: 9 Hours
 Total Hours Worked: X Hours

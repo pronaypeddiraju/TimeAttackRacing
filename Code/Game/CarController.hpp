@@ -26,6 +26,7 @@ public:
 	void						SetVehiclePosition(const Vec3& targetPosition);
 	void						SetVehicleTransform(const Vec3& targetPosition, const PxQuat& quaternion);
 	void						SetVehicleTransform(const PxTransform& transform);
+	void						SetNewPxVehicle(PxVehicleDrive4W* vehicle);
 
 	//Vehicle Getters
 	PxVehicleDrive4W*			GetVehicle() const;
@@ -48,6 +49,7 @@ public:
 	void	ReverseGear();
 
 	void	ReleaseAllControls();
+	void	RemoveVehicleFromScene();
 	void	ReleaseVehicle();
 	bool	IsControlReleased();
 private:

@@ -299,8 +299,11 @@ void CarAudio::UpdateSimplexMultiTrack()
 		}
 		else if(m_carControllerRef->IsControlReleased())
 		{
-			g_audio->SetSoundPlaybackSpeed(m_soundPlaybackIDs[currentGear], ratio);
-			g_audio->SetSoundPlaybackVolume(m_soundPlaybackIDs[currentGear], 0.f);
+			for (int j = 0; j < m_numFiles; j++)
+			{
+				g_audio->SetSoundPlaybackSpeed(m_soundPlaybackIDs[j], 0.f);
+				g_audio->SetSoundPlaybackVolume(m_soundPlaybackIDs[j], 0.f);
+			}
 		}
 	}
 

@@ -45,10 +45,10 @@ Game::Game()
 {
 	m_isGameAlive = true;
 
-	m_squirrelFont = g_renderContext->CreateOrGetBitmapFontFromFile("SquirrelFixedFont");
+	m_menuFont = g_renderContext->CreateOrGetBitmapFontFromFile("AtariClassic", VARIABLE_WIDTH);
 
-	g_devConsole->SetBitmapFont(*m_squirrelFont);
-	g_debugRenderer->SetDebugFont(m_squirrelFont);
+	g_devConsole->SetBitmapFont(*m_menuFont);
+	g_debugRenderer->SetDebugFont(m_menuFont);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -61,33 +61,32 @@ Game::~Game()
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
-	//Test audio here
-	//std::string path = "Data/Audio/UproarLilWayne.mp3";
-	//SoundID soundID = g_audio->CreateOrGetSound(path);
-	//SoundPlaybackID playbackID = g_audio->PlayAudio(soundID);
-	//g_audio->SetSoundPlaybackVolume(playbackID, 0.1f);
-
 	SetupMouseData();
 
 	GetandSetShaders();
 	LoadGameTextures();
-
 	LoadGameMaterials();
-
 	CreateUIWidgets();
 
 	g_devConsole->PrintString(Rgba::ORGANIC_BLUE, "This is the Dev Console");
 
 	CreateInitialLight();
 	SetupCameras();
-
 	SetupPhysX();
 
 	Vec3 camEuler = Vec3(-12.5f, -196.f, 0.f);
 	m_mainCamera->SetEuler(camEuler);
 
+	ReadBestTimeFromFile();
+
 	CreateInitialMeshes();
-	PerformAsyncLoading();
+	//LoadGameTexturesThreaded();
+	//PerformAsyncLoading();
+
+	PerformSingleThreadLoading();
+
+	//Set this to true for now since we are only single threaded
+	m_threadedLoadComplete = true;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -108,6 +107,8 @@ void Game::InitiateGameSequence()
 	SetEnableXInput(true);
 
 	CreateBaseBoxForCollisionDetection();
+
+	LoadTrackMeshesOnSceneCreation();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -427,27 +428,42 @@ void Game::CreateUIWidgets()
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+void Game::PerformSingleThreadLoading()
+{
+	m_carModel = g_renderContext->CreateOrGetMeshFromFile(m_carMeshPath);
+	m_wheelModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelMeshPath);
+	m_wheelFlippedModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelFlippedMeshPath);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::LoadTrackMeshesOnSceneCreation()
+{
+	m_trackTestModel = g_renderContext->CreateOrGetMeshFromFile(m_trackTestPath);
+	m_trackCollidersTestModel = g_renderContext->CreateOrGetMeshFromFile(m_trackCollisionsTestPath);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 void Game::PerformAsyncLoading()
 {
 	if (!m_threadedLoadComplete)
 	{
-		StartLoadingModel(m_carMeshPath);
-		StartLoadingModel(m_wheelMeshPath);
-		StartLoadingModel(m_wheelFlippedMeshPath);
-		StartLoadingModel(m_trackTestPath);
-		StartLoadingModel(m_trackCollisionsTestPath);
+		EnqueueLoadingModel(m_carMeshPath);
+		EnqueueLoadingModel(m_wheelMeshPath);
+		EnqueueLoadingModel(m_wheelFlippedMeshPath);
+		EnqueueLoadingModel(m_trackTestPath);
+		EnqueueLoadingModel(m_trackCollisionsTestPath);
 
 		int coreCount = std::thread::hardware_concurrency();
 		int halfCores = coreCount / 2;
 		for (int i = 0; i < halfCores; ++i)
 		{
-			m_threads.emplace_back(&Game::ModelLoadThread, this);
+			m_threads.emplace_back(&Game::LoadModelsFromThread, this);
 		}
 	}
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-void Game::StartLoadingModel(std::string fileName)
+void Game::EnqueueLoadingModel(std::string fileName)
 {
 	ModelLoadWork* work = new ModelLoadWork(fileName);
 	work->modelName = fileName;
@@ -457,7 +473,7 @@ void Game::StartLoadingModel(std::string fileName)
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-void Game::ModelLoadThread()
+void Game::LoadModelsFromThread()
 {
 	ModelLoadWork* work;
 
@@ -605,7 +621,12 @@ void Game::CheckForRaceCompletion()
 	if (raceEnded)
 	{
 		//The race has completed so you can do some logic here
-		TODO("Write the best time to an XML File");
+		m_bestTimeForRun = bestTime;
+
+		if (m_bestTimeForRun < m_bestTimeFromFile)
+		{
+			WriteNewBestTime();
+		}
 
 		HandleRaceCompletedCondition();
 	}
@@ -1227,10 +1248,10 @@ void Game::RenderPhysXCar(const CarController& carController) const
 			if (m_debugViewCarCollider)
 			{
 				Matrix44 modelMatrix = Matrix44::IDENTITY;
-				modelMatrix.SetTranslation3D(Vec3(0.f, 100.f, 0.f), modelMatrix);
+				//modelMatrix.SetTranslation3D(Vec3(0.f, 100.f, 0.f), modelMatrix);
 				g_renderContext->SetModelMatrix(modelMatrix);
 				g_renderContext->BindMaterial(m_defaultMaterial);
-				AddMeshForConvexMesh(cvxMesh, *car, *shapes[shapeIndex], Rgba(1.f, 0.f, 1.f, 0.3f));
+				AddMeshForConvexMesh(cvxMesh, *car, *shapes[shapeIndex], Rgba::MAGENTA);
 				GPUMesh debugMesh(g_renderContext);
 				debugMesh.CreateFromCPUMesh<Vertex_Lit>(&cvxMesh);
 				g_renderContext->DrawMesh(&debugMesh);
@@ -1251,6 +1272,17 @@ void Game::RenderPhysXCar(const CarController& carController) const
 			{
 				g_renderContext->DrawMesh(m_wheelModel);
 			}
+
+			if (m_debugViewCarCollider)
+			{	
+				Matrix44 modelMatrix = Matrix44::IDENTITY;
+				g_renderContext->SetModelMatrix(modelMatrix);
+				AddMeshForConvexMesh(cvxMesh, *car, *shapes[shapeIndex], Rgba::MAGENTA);
+				GPUMesh debugMesh(g_renderContext);
+				debugMesh.CreateFromCPUMesh<Vertex_Lit>(&cvxMesh);
+				g_renderContext->DrawMesh(&debugMesh);
+			}
+
 		}
 	}
 
@@ -1391,17 +1423,17 @@ void Game::RenderMenuScreen() const
 	//Draw a background image
 	std::vector<Vertex_PCU> backgroundImageVerts;
 	g_renderContext->BindTextureViewWithSampler(0U, nullptr);
-	AddVertsForAABB2D(backgroundImageVerts, AABB2(camMinBounds, camMaxBounds), Rgba::WHITE);
+	AddVertsForAABB2D(backgroundImageVerts, AABB2(camMinBounds, camMaxBounds), Rgba::BLACK);
 	g_renderContext->DrawVertexArray(backgroundImageVerts);
 
 	//Draw a join message
 	std::string printString = "Press RETURN to start game!";
 	Vec2 textBoxOffset = Vec2(400.f, 25.f);
 	std::vector<Vertex_PCU> textVerts;
-	m_squirrelFont->AddVertsForTextInBox2D(textVerts, AABB2(camMaxBounds * 0.5f - textBoxOffset , camMaxBounds * 0.5f + textBoxOffset), m_menuFontHeight, printString, Rgba::RED);
+	m_menuFont->AddVertsForTextInBox2D(textVerts, AABB2(camMaxBounds * 0.5f - textBoxOffset , camMaxBounds * 0.5f + textBoxOffset), m_menuFontHeight, printString, Rgba::ORGANIC_YELLOW);
 	//m_squirrelFont->AddVertsForText2D(textVerts, Vec2(0.f, 0.f), m_fontHeight, printString, Rgba::RED);
 
-	g_renderContext->BindTextureViewWithSampler(0U, m_squirrelFont->GetTexture(), SAMPLE_MODE_POINT);
+	g_renderContext->BindTextureViewWithSampler(0U, m_menuFont->GetTexture(), SAMPLE_MODE_POINT);
 	g_renderContext->DrawVertexArray(textVerts);
 
 	g_renderContext->EndCamera();
@@ -1427,17 +1459,65 @@ void Game::RenderRaceCompleted() const
 	AddVertsForAABB2D(backgroundImageVerts, AABB2(camMinBounds, camMaxBounds), Rgba(0.f, 0.f, 0.f, 0.45f));
 	g_renderContext->DrawVertexArray(backgroundImageVerts);
 
+	g_renderContext->BindTextureViewWithSampler(0U, m_menuFont->GetTexture(), SAMPLE_MODE_POINT);
+
+	std::vector<Vertex_PCU> timeVerts;
+	AddVertsForPlayerTimesInOrder(timeVerts);
+	g_renderContext->DrawVertexArray(timeVerts);
+
 	//Draw a join message
 	std::string printString = "Press R to Restart the game";
-	Vec2 textBoxOffset = Vec2(400.f, 25.f);
+	Vec2 offset = Vec2(camMinBounds.x + 100.f, camMaxBounds.y * 0.5f + 200.f);
 	std::vector<Vertex_PCU> textVerts;
-	m_squirrelFont->AddVertsForTextInBox2D(textVerts, AABB2(camMaxBounds * 0.5f - textBoxOffset, camMaxBounds * 0.5f + textBoxOffset), m_menuFontHeight, printString, Rgba::RED);
+	m_menuFont->AddVertsForText2D(textVerts, camMinBounds + offset, m_menuFontHeight, printString, Rgba::ORGANIC_RED);
 	//m_squirrelFont->AddVertsForText2D(textVerts, Vec2(0.f, 0.f), m_fontHeight, printString, Rgba::RED);
 
-	g_renderContext->BindTextureViewWithSampler(0U, m_squirrelFont->GetTexture(), SAMPLE_MODE_POINT);
 	g_renderContext->DrawVertexArray(textVerts);
 
 	g_renderContext->EndCamera();
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::AddVertsForPlayerTimesInOrder(std::vector<Vertex_PCU>& timeVerts) const
+{
+	float time[4];
+	int indices[4];
+
+	for (int index = 0; index < m_numConnectedPlayers; index++)
+	{
+		time[index] = m_cars[index]->GetRaceTime();
+		indices[index] = index;
+	}
+
+	//Sort the list in decending order
+	for (int i = 0; i < m_numConnectedPlayers; i++)
+	{
+		for (int j = i; j < m_numConnectedPlayers; j++)
+		{
+			if (time[j] < time[i])
+			{
+				float temp = time[i];
+				time[i] = time[j];
+				time[j] = temp;
+
+				int tempIndex = indices[i];
+				indices[i] = indices[j];
+				indices[j] = tempIndex;
+			}
+		}
+	}
+
+	//Now print the player times in decending order:
+	AABB2 camBounds = AABB2(m_UICamera->GetOrthoBottomLeft(), m_UICamera->GetOrthoTopRight());
+	Vec2 offset = Vec2(camBounds.m_minBounds.x + 100.f, camBounds.m_maxBounds.y * 0.5f);
+	std::string printString = "";
+
+	for (int playerIndex = 0; playerIndex < m_numConnectedPlayers; playerIndex++)
+	{
+		printString = Stringf("Position: %d : Player : %d Time : %.2f", playerIndex + 1, indices[playerIndex] + 1, time[playerIndex]);
+		m_menuFont->AddVertsForText2D(timeVerts, camBounds.m_minBounds + offset, m_menuFontHeight, printString, Rgba::ORGANIC_BLUE);
+		offset.y -= m_menuFontHeight * 1.5f;
+	}
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1451,9 +1531,9 @@ void Game::RenderUITest() const
 	//Toggle UI 
 	std::string printString = "Toggle Control Scheme (LCTRL Button) ";
 	std::vector<Vertex_PCU> textVerts;
-	m_squirrelFont->AddVertsForText2D(textVerts, Vec2(0.f, 0.f), m_fontHeight, printString, Rgba::WHITE);
+	m_menuFont->AddVertsForText2D(textVerts, Vec2(0.f, 0.f), m_fontHeight, printString, Rgba::WHITE);
 
-	g_renderContext->BindTextureViewWithSampler(0U, m_squirrelFont->GetTexture());
+	g_renderContext->BindTextureViewWithSampler(0U, m_menuFont->GetTexture());
 	g_renderContext->DrawVertexArray(textVerts);
 }
 
@@ -1463,7 +1543,7 @@ void Game::RenderDebugInfoOnScreen() const
 	Vec2 camMinBounds = m_UICamera->GetOrthoBottomLeft();
 	Vec2 camMaxBounds = m_UICamera->GetOrthoTopRight();
 
-	g_renderContext->BindTextureViewWithSampler(0U, m_squirrelFont->GetTexture(), SAMPLE_MODE_POINT);
+	g_renderContext->BindTextureViewWithSampler(0U, m_menuFont->GetTexture(), SAMPLE_MODE_POINT);
 
 	Vec2 displayArea = Vec2::ZERO;
 	displayArea.y = camMaxBounds.y - m_fontHeight;
@@ -1472,7 +1552,7 @@ void Game::RenderDebugInfoOnScreen() const
 	std::string printString = Stringf("FPS: %.2f", m_avgFPS);
 	std::vector<Vertex_PCU> textVerts;
 
-	m_squirrelFont->AddVertsForText2D(textVerts, displayArea, m_fontHeight, printString, Rgba::WHITE);
+	m_menuFont->AddVertsForText2D(textVerts, displayArea, m_fontHeight, printString, Rgba::WHITE);
 	g_renderContext->DrawVertexArray(textVerts);
 
 	displayArea.y -= m_fontHeight;
@@ -1480,7 +1560,7 @@ void Game::RenderDebugInfoOnScreen() const
 	//Lowest FPS
 	printString = Stringf("Lowest FPS: %.2f", m_fpsLowest);
 	textVerts.clear();
-	m_squirrelFont->AddVertsForText2D(textVerts, displayArea, m_fontHeight, printString, Rgba::ORGANIC_DIM_RED);
+	m_menuFont->AddVertsForText2D(textVerts, displayArea, m_fontHeight, printString, Rgba::ORGANIC_DIM_RED);
 	g_renderContext->DrawVertexArray(textVerts);
 
 	displayArea.y -= m_fontHeight;
@@ -1488,7 +1568,7 @@ void Game::RenderDebugInfoOnScreen() const
 	//Highest FPS
 	printString = Stringf("Highest FPS: %.2f", m_fpsHighest);
 	textVerts.clear();
-	m_squirrelFont->AddVertsForText2D(textVerts, displayArea, m_fontHeight, printString, Rgba::ORGANIC_GREEN);
+	m_menuFont->AddVertsForText2D(textVerts, displayArea, m_fontHeight, printString, Rgba::ORGANIC_GREEN);
 	g_renderContext->DrawVertexArray(textVerts);
 
 	displayArea.y -= m_fontHeight;
@@ -1496,7 +1576,7 @@ void Game::RenderDebugInfoOnScreen() const
 	//(Frame delta)
 	printString = Stringf("Frame Delta-Time: %.5f", m_deltaTime);
 	textVerts.clear();
-	m_squirrelFont->AddVertsForText2D(textVerts, displayArea, m_fontHeight, printString, Rgba::WHITE);
+	m_menuFont->AddVertsForText2D(textVerts, displayArea, m_fontHeight, printString, Rgba::WHITE);
 	g_renderContext->DrawVertexArray(textVerts);
 }
 
@@ -1516,6 +1596,12 @@ void Game::DeleteUI()
 {
 	delete m_menuParent;
 	m_menuParent = nullptr;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::WriteNewBestTime()
+{
+	throw std::logic_error("The method or operation is not implemented.");
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1542,6 +1628,51 @@ void Game::CreateBaseBoxForCollisionDetection()
 	shape->setQueryFilterData(qryFilterData);
 
 	pxScene->addActor(*rs);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::ResetCarsUsingToolData()
+{
+	//Use tool data and re-create car controllers
+
+	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
+	{
+		CarController* controller = m_cars[carIndex]->GetCarControllerEditable();
+		//Vec3 carPosition = controller->GetVehiclePosition();
+
+		//Remove actor from scene
+		controller->RemoveVehicleFromScene();
+
+		//Make a new car using the data from tool
+		controller->SetNewPxVehicle(m_carTool.MakeNewCar());
+		//controller->SetVehiclePosition(carPosition);
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::ReadBestTimeFromFile()
+{
+	//Open the xml file and parse it
+	tinyxml2::XMLDocument timeDoc;
+	timeDoc.LoadFile(m_saveFilePath.c_str());
+
+	if (timeDoc.ErrorID() != tinyxml2::XML_SUCCESS)
+	{
+
+		ERROR_AND_DIE(">> Error save file ");
+		return;
+	}
+	else
+	{
+		//We loaded the file successfully
+		XMLElement* root = timeDoc.RootElement();
+		XMLElement* elem = root->FirstChildElement("BestTime");
+
+		if (root->FindAttribute("time"))
+		{
+			m_bestTimeFromFile = ParseXmlAttribute(*root, "time", (float)m_bestTimeFromFile);
+		}
+	}
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1997,13 +2128,15 @@ void Game::Update(float deltaTime)
 		return;	//Currently unsupported for keyboard input
 
 	//Finishing up with the loading threads and work
-	if (IsFinishedImageLoading() && IsFinishedModelLoading() && !m_threadedLoadComplete)
+	//Un-comment when we want to use threaded model loading
+// 	if (IsFinishedImageLoading() && !m_threadedLoadComplete)	//&& IsFinishedModelLoading() 
+// 	{
+// 		SetMeshesAndJoinThreads();
+// 	}
+	
+	if (!m_threadedLoadComplete)
 	{
-		SetMeshesAndJoinThreads();
-	}
-	else if (!m_threadedLoadComplete)
-	{
-		FinishReadyModels();
+		//FinishReadyModels();
 		FinishReadyImages();
 		return;
 	}
@@ -2066,6 +2199,8 @@ void Game::UpdateImGUI()
 {
 	UpdateImGUIPhysXWidget();
 	UpdateImGUIDebugWidget();
+
+	UpdateImGUIVehicleTool();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -2163,18 +2298,18 @@ void Game::UpdateImGUIDebugWidget()
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::UpdateImGUIVehicleTool()
 {
-	//Tool for car here
-	ImGui::Begin("PhysX Vehicle Tool");
+	m_carTool.UpdateImGUICarTool();
 
-	//ImGui::ColorEdit3("Scene Background Color", (float*)&ui_cameraClearColor); // Edit 3 floats representing a color
-	ImGui::DragFloat3("Light Direction", ui_dirLight);
-	ImGui::Checkbox("Enable Debug Camera", &ui_swapToMainCamera);
-	ImGui::DragFloat3("Track Translation", ui_racetrackTranslation);
+	ImGui::Begin("Reset Cars using Tool data");
+
+	bool result = ImGui::Button("Click To Reset Cars");
+	if (result)
+	{
+		//Create new cars here
+		DebuggerPrintf("\n Creating new cars");
+		ResetCarsUsingToolData();
+	}
 	
-	//ImGui::DragFloat3("Car Position", (float*)&position);
-
-	ImGui::Checkbox("Enable Convex Hull Debug", &ui_enableConvexHullRenders);
-	ImGui::Checkbox("Enable Car Debug", &ui_enableCarDebug);
 
 	ImGui::End();
 }
@@ -2194,11 +2329,11 @@ void Game::RenderGearNumber(int carIndex) const
 	HUD.SetColorTarget(g_renderContext->GetFrameColorTarget());
 
 	g_renderContext->BeginCamera(HUD);
-	g_renderContext->BindTextureViewWithSampler(0U, m_squirrelFont->GetTexture());
+	g_renderContext->BindTextureViewWithSampler(0U, m_menuFont->GetTexture());
 	g_renderContext->BindShader(m_shader);
 	std::vector<Vertex_PCU> verts;
 	std::string textValue = std::to_string(m_cars[carIndex]->GetCarController().GetVehicle()->mDriveDynData.getCurrentGear());
-	m_squirrelFont->AddVertsForText2D(verts, Vec2((HUD.GetOrthoTopRight().x * 0.5f) + 50.f * carIndex, 100.f), 10.f, textValue.c_str(), Rgba::RED);
+	m_menuFont->AddVertsForText2D(verts, Vec2((HUD.GetOrthoTopRight().x * 0.5f) + 50.f * carIndex, 100.f), 10.f, textValue.c_str(), Rgba::RED);
 	g_renderContext->DrawVertexArray(verts);
 
 	g_renderContext->EndCamera();
@@ -2261,6 +2396,14 @@ void Game::CreateInitialMeshes()
 
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::LoadGameTextures()
+{
+	m_textureTest = g_renderContext->CreateOrGetTextureViewFromFile(m_testImagePath);
+	m_boxTexture = g_renderContext->CreateOrGetTextureViewFromFile(m_boxTexturePath);
+	m_sphereTexture = g_renderContext->CreateOrGetTextureViewFromFile(m_sphereTexturePath);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::LoadGameTexturesThreaded()
 {
 	StartLoadingImage(m_testImagePath);
 	StartLoadingImage(m_boxTexturePath);
