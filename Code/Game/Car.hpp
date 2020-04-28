@@ -52,6 +52,7 @@ public:
 
 	//For reset car transform we will just orient it at current forward direction and set position at current pos and y += 10;
 	void						ResetCarPosition();
+	void						ResetWaypointSystem();
 
 	void						SetCameraColorTarget(ColorTargetView* colorTargetView);
 	void						SetCameraPerspectiveProjection(float m_camFOVDegrees, float nearZ, float farZ, float aspect);

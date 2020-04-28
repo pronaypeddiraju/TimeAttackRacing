@@ -187,6 +187,16 @@ void WaypointSystem::UpdateImGUIForWaypoints()
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+void WaypointSystem::Reset()
+{
+	m_lapsCompleted = false;
+	m_startTime = GetCurrentTimeSeconds();
+	m_timeStamps.clear();
+	m_lapIndex = 1;
+	m_crossedIndex = UINT_MAX;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 void WaypointSystem::SetSystemToNextWaypoint()
 {
 	//Increase m_crossedIndex;

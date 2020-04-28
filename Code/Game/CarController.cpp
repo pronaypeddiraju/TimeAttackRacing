@@ -414,3 +414,13 @@ bool CarController::IsControlReleased()
 	return m_controlReleased;
 }
 
+//------------------------------------------------------------------------------------------------------------------------------
+void CarController::SetVehicleDefaultOrientation()
+{
+	PxTransform pose;
+	pose.p = PhysXSystem::VecToPxVector(GetVehiclePosition());
+	pose.q = PxQuat(0.f, 0.f, 0.f, 1.f);
+
+	m_vehicle4W->getRigidDynamicActor()->setGlobalPose(pose);
+}
+

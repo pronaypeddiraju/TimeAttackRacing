@@ -200,6 +200,9 @@ private:
 	void								WriteNewBestTimeText();
 	void								DeleteUI();
 
+	//Restart level functionality
+	void								RestartLevel();
+
 private:
 	bool								m_isGameAlive = false;
 	bool								m_consoleDebugOnce = false;

@@ -982,6 +982,14 @@ void Game::HandleKeyPressed(unsigned char keyCode)
 				InitiateGameSequence();
 			}
 		}
+		case R_KEY:
+		{
+			if (m_isRaceCompleted)
+			{
+				m_isRaceCompleted = false;
+				RestartLevel();
+			}
+		}
 		break;
 		default:
 		break;
@@ -1670,6 +1678,39 @@ void Game::DeleteUI()
 {
 	delete m_menuParent;
 	m_menuParent = nullptr;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::RestartLevel()
+{
+	//Set all cars to have no forces acting on them
+	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
+	{
+		SetEnableXInput(false);
+
+		CarController* controller = m_cars[carIndex]->GetCarControllerEditable();
+		controller->ReleaseAllControls();
+		controller->GetVehicle()->getRigidDynamicActor()->clearForce();
+		controller->GetVehicle()->getRigidDynamicActor()->clearTorque();
+
+		controller->GetVehicle()->getRigidDynamicActor()->setForceAndTorque(PxVec3(0.f, 0.f, 0.f), PxVec3(0.f, 0.f, 0.f));
+		controller->GetVehicle()->getRigidDynamicActor()->setLinearVelocity(PxVec3(0.f, 0.f, 0.f));
+		controller->GetVehicle()->getRigidDynamicActor()->setAngularVelocity(PxVec3(0.f, 0.f, 0.f));
+
+		//Reset all car data values (Timing and waypoints and what not)
+		m_cars[carIndex]->ResetWaypointSystem();
+
+		//Set all cars to their initial positions
+		controller->SetVehiclePosition(m_startPositions[carIndex]);
+		controller->SetVehicleDefaultOrientation();
+
+		//PxTransform transform;
+		//transform.p = PhysXSystem::VecToPxVector(m_startPositions[carIndex]);
+		//transform.q = PxQuat();
+		//controller->SetVehicleTransform(transform);
+		
+		SetEnableXInput(true);
+	}
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

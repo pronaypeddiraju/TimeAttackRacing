@@ -23,6 +23,7 @@ public:
 	void						SetControllerIDToUse(int controllerID);
 
 	//Vehicle Setter
+	void						SetVehicleDefaultOrientation();
 	void						SetVehiclePosition(const Vec3& targetPosition);
 	void						SetVehicleTransform(const Vec3& targetPosition, const PxQuat& quaternion);
 	void						SetVehicleTransform(const PxTransform& transform);
@@ -52,6 +53,7 @@ public:
 	void	RemoveVehicleFromScene();
 	void	ReleaseVehicle();
 	bool	IsControlReleased();
+
 private:
 
 	int			m_controllerID = 0;

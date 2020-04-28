@@ -48,6 +48,7 @@ void Car::Update(float deltaTime, bool isInputEnabled /*= true*/)
 	if (isInputEnabled)
 	{
 		m_controller->Update(deltaTime);
+		m_controller->m_controlReleased = false;
 	}
 	else
 	{
@@ -423,6 +424,12 @@ void Car::ResetCarPosition()
 // 	//Move up by some amount
 // 	vehiclePosition.y += m_resetHeightAdd;
 // 	m_controller->SetVehicleTransform(vehiclePosition, q);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Car::ResetWaypointSystem()
+{
+	m_waypoints.Reset();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

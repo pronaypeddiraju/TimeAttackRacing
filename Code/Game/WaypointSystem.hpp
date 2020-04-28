@@ -33,6 +33,8 @@ public:
 
 	void					UpdateImGUIForWaypoints();
 
+	void					Reset();
+
 private:
 	void					SetSystemToNextWaypoint();
 	void					AddTimeStampForLap();
