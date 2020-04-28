@@ -13,6 +13,8 @@ class SplitScreenSystem
 {
 public:
 
+	friend class Game;
+
 	SplitScreenSystem();
 	~SplitScreenSystem();
 

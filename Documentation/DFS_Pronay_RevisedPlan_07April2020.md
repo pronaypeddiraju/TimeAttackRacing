@@ -45,12 +45,12 @@ Notes about this document:
 	-	[4] PhysX bug on car (Un-solved)
 	-	[4] Quaternion bugs on reset
 	-	[9] Car Tool 
-	- 	[3] Car Tuning
+	- 	[4] Car Tuning
 
-Total: 25 hours
+Total: 26 hours
 
 Total Hours Planned: 14 Hours
-Total Hours Worked: 25 Hours
+Total Hours Worked: 26 Hours
 
 ## WEEK 13: TRACK REFINEMENT AND PLAYER CONVEYANCE
 

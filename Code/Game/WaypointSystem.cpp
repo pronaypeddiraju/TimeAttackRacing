@@ -82,7 +82,7 @@ void WaypointSystem::SetMaxLapCount(uint maxLapCount)
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-double WaypointSystem::GetTotalTime()
+double WaypointSystem::GetTotalTime() const
 {
 	if (m_lapsCompleted)
 	{
@@ -95,7 +95,7 @@ double WaypointSystem::GetTotalTime()
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-bool WaypointSystem::AreLapsComplete()
+bool WaypointSystem::AreLapsComplete() const
 {
 	return m_lapsCompleted;
 }
@@ -251,6 +251,12 @@ double WaypointSystem::GetAccumulatedLapTimes() const
 		accumulatedTime += *timeItr;
 
 		timeItr++;
+	}
+
+	if (accumulatedTime == 0.0)
+	{
+		//We didn't get any accumulated time yet
+		accumulatedTime = GetCurrentTimeSeconds() - m_startTime;
 	}
 
 	return accumulatedTime;

@@ -1,5 +1,8 @@
 #include "Game/Car.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Renderer/Shader.hpp"
+#include "Engine/Renderer/RenderContext.hpp"
+#include "Engine/Core/VertexUtils.hpp"
 
 //------------------------------------------------------------------------------------------------------------------------------
 Car::Car()
@@ -14,8 +17,10 @@ Car::~Car()
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-void Car::StartUp(const Vec3& startPosition, int controllerID)
+void Car::StartUp(const Vec3& startPosition, int controllerID, float timeToBeat)
 {
+	m_timeToBeat = timeToBeat;
+
 	m_camera = new CarCamera();
 	m_carHUD = new Camera();
 	m_controller = new CarController();
@@ -33,6 +38,8 @@ void Car::StartUp(const Vec3& startPosition, int controllerID)
 	Vec2 orthoTopRight = Vec2(m_HUD_WIDTH, m_HUD_HEIGHT);
 	m_carHUD->SetOrthoView(orthoBottomLeft, orthoTopRight);
 
+	m_HUDFont = g_renderContext->CreateOrGetBitmapFontFromFile("AtariClassic", VARIABLE_WIDTH);
+	m_HUDshader = g_renderContext->CreateOrGetShaderFromFile(m_shaderPath);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -180,6 +187,203 @@ void Car::UpdateCarCamera(float deltaTime)
 double Car::GetRaceTime()
 {
 	return m_raceTime;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Car::RenderUIHUD() const
+{
+	g_renderContext->BeginCamera(*m_carHUD);
+
+	//Draw all the background boxes
+	g_renderContext->BindTextureViewWithSampler(0U, nullptr);
+	g_renderContext->BindShader(m_HUDshader);
+
+	RenderBackgroundBoxes();
+
+	g_renderContext->BindTextureViewWithSampler(0U, m_HUDFont->GetTexture(), SAMPLE_MODE_POINT);
+
+	RenderLapCounter();
+	RenderTimeTaken();
+	RenderTimeToBeat();
+	RenderGearIndicator();
+	RenderRevMeter();
+
+	g_renderContext->EndCamera();
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Car::RenderBackgroundBoxes() const
+{
+	//We want to render all the background boxes for the UI HUD
+	std::vector<Vertex_PCU> boxVerts;
+
+	Vec2 camMinBounds = m_carHUD->GetOrthoBottomLeft();
+	Vec2 camMaxBounds = m_carHUD->GetOrthoTopRight();
+
+	Rgba backgroundColor = Rgba::ORGANIC_DIM_BLUE;
+	backgroundColor.a = 0.5f;
+
+	AABB2 box;
+	
+	//Lower left corner
+	box.m_minBounds = Vec2::ZERO;
+	box.m_maxBounds = Vec2(80.f, 15.f);
+	AddVertsForAABB2D(boxVerts, box, backgroundColor);
+
+	//Lower right corner
+	box.m_minBounds = camMaxBounds;
+	box.m_minBounds.x -= 100.f;
+	box.m_minBounds.y = 0.0f;
+	box.m_maxBounds = camMaxBounds;
+	box.m_maxBounds.y = 15.f;
+	AddVertsForAABB2D(boxVerts, box, backgroundColor);
+
+	//Upper left corner
+	box.m_minBounds = camMaxBounds;
+	box.m_minBounds.x = 0.f;
+	box.m_minBounds.y -= 15.0f;
+	box.m_maxBounds = camMaxBounds;
+	box.m_maxBounds.x = 80.f;
+	
+	AddVertsForAABB2D(boxVerts, box, backgroundColor);
+
+	//Upper right corner
+	box.m_minBounds = camMaxBounds;
+	box.m_minBounds.x -= 100.f;
+	box.m_minBounds.y -= 15.0f;
+	box.m_maxBounds = camMaxBounds;
+	AddVertsForAABB2D(boxVerts, box, backgroundColor);
+
+	g_renderContext->DrawVertexArray(boxVerts);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Car::RenderLapCounter() const
+{
+	//Render the current lap out of num total laps
+	int lapNumber = m_waypoints.GetCurrentLapNumber();
+	int numLaps = m_waypoints.GetMaxLapCount();
+
+	Vec2 camMinBounds = m_carHUD->GetOrthoBottomLeft();
+	Vec2 camMaxBounds = m_carHUD->GetOrthoTopRight();
+
+	Vec2 displayArea = camMaxBounds;
+	displayArea.x = 20.f;
+	displayArea.y -= m_HUDFontHeight * 2.f;
+
+	std::string printString = Stringf("Laps: %d/%d", lapNumber, numLaps);
+	std::vector<Vertex_PCU> textVerts;
+
+	if (!m_waypoints.AreLapsComplete())
+	{
+		m_HUDFont->AddVertsForText2D(textVerts, displayArea, m_HUDFontHeight, printString, Rgba::WHITE);
+	}
+	else
+	{
+		std::string printString = "COMPLETE!";
+		m_HUDFont->AddVertsForText2D(textVerts, displayArea, m_HUDFontHeight, printString, Rgba::ORGANIC_GREEN);
+	}
+
+	g_renderContext->DrawVertexArray(textVerts);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Car::RenderTimeTaken() const
+{
+	float timeTaken = m_waypoints.GetTotalTime();
+
+	Vec2 camMinBounds = m_carHUD->GetOrthoBottomLeft();
+	Vec2 camMaxBounds = m_carHUD->GetOrthoTopRight();
+
+	Vec2 displayArea = camMaxBounds;
+	displayArea.x -= 100.f;
+	displayArea.y -= m_HUDFontHeight * 2.f;
+
+	std::string printString = Stringf("Time Taken: %.3f", timeTaken);
+	std::vector<Vertex_PCU> textVerts;
+
+	if (!m_waypoints.AreLapsComplete())
+	{
+		m_HUDFont->AddVertsForText2D(textVerts, displayArea, m_HUDFontHeight, printString, Rgba::WHITE);
+	}
+	else
+	{
+		m_HUDFont->AddVertsForText2D(textVerts, displayArea, m_HUDFontHeight, printString, Rgba::ORGANIC_GREEN);
+	}
+
+	g_renderContext->DrawVertexArray(textVerts);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Car::RenderTimeToBeat() const
+{
+	float timeToBeat = m_timeToBeat;
+
+	Vec2 camMinBounds = m_carHUD->GetOrthoBottomLeft();
+	Vec2 camMaxBounds = m_carHUD->GetOrthoTopRight();
+
+	Vec2 displayArea = camMaxBounds;
+	displayArea.x -= 100.f;
+	displayArea.y = 0.f;
+	displayArea.y += m_HUDFontHeight;
+
+	std::string printString = Stringf("Time To Beat: %.3f", timeToBeat);
+	std::vector<Vertex_PCU> textVerts;
+
+	if (!m_waypoints.AreLapsComplete())
+	{
+		m_HUDFont->AddVertsForText2D(textVerts, displayArea, m_HUDFontHeight, printString, Rgba::WHITE);
+	}
+	else if(m_waypoints.AreLapsComplete() && m_waypoints.GetTotalTime() < m_timeToBeat)
+	{
+		std::string printString = Stringf("Time To Beat: %.3f", m_waypoints.GetTotalTime());
+		m_HUDFont->AddVertsForText2D(textVerts, displayArea, m_HUDFontHeight, printString, Rgba::ORGANIC_GREEN);
+	}
+	else
+	{
+		m_HUDFont->AddVertsForText2D(textVerts, displayArea, m_HUDFontHeight, printString, Rgba::ORGANIC_RED);
+	}
+
+	g_renderContext->DrawVertexArray(textVerts);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Car::RenderGearIndicator() const
+{
+	int currentGear = m_controller->GetVehicle()->mDriveDynData.getCurrentGear();
+
+	Vec2 camMinBounds = m_carHUD->GetOrthoBottomLeft();
+	Vec2 camMaxBounds = m_carHUD->GetOrthoTopRight();
+
+	Vec2 displayArea = camMinBounds;
+	displayArea.x += 20.f;
+	displayArea.y += m_HUDFontHeight;
+
+	std::string printString = Stringf("Gear: %d", currentGear - 1);
+	std::vector<Vertex_PCU> textVerts;
+
+	if (currentGear != 1 && currentGear != 0)
+	{
+		m_HUDFont->AddVertsForText2D(textVerts, displayArea, m_HUDFontHeight, printString, Rgba::WHITE);
+	}
+	else if(currentGear == 1)
+	{
+		printString = "Gear: N";
+		m_HUDFont->AddVertsForText2D(textVerts, displayArea, m_HUDFontHeight, printString, Rgba::ORGANIC_GREEN);
+	}
+	else
+	{
+		printString = "Gear: R";
+		m_HUDFont->AddVertsForText2D(textVerts, displayArea, m_HUDFontHeight, printString, Rgba::ORGANIC_ORANGE);
+	}
+
+	g_renderContext->DrawVertexArray(textVerts);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Car::RenderRevMeter() const
+{
+
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

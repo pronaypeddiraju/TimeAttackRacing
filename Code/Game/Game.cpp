@@ -30,8 +30,12 @@
 #include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/TextureView.hpp"
 #include "Engine/Renderer/ObjectLoader.hpp"
+#include "Engine/Core/FileUtils.hpp"
 //Game Systems
 #include "Game/UIWidget.hpp"
+//Third party
+#include "ThirdParty/TinyXML2/tinyxml2.h"
+#include <fstream>
 
 //------------------------------------------------------------------------------------------------------------------------------
 float g_shakeAmount = 0.0f;
@@ -77,7 +81,7 @@ void Game::StartUp()
 	Vec3 camEuler = Vec3(-12.5f, -196.f, 0.f);
 	m_mainCamera->SetEuler(camEuler);
 
-	ReadBestTimeFromFile();
+	ReadBestTimeFromTextFile();
 
 	CreateInitialMeshes();
 	//LoadGameTexturesThreaded();
@@ -120,7 +124,7 @@ void Game::SetupCars()
 	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
 	{
 		m_cars[carIndex] = new Car();
-		m_cars[carIndex]->StartUp(m_startPositions[carIndex], carIndex);
+		m_cars[carIndex]->StartUp(m_startPositions[carIndex], carIndex, m_bestTimeFromFile);
 		m_cars[carIndex]->SetupCarAudio();
 
 		m_cars[carIndex]->SetCameraColorTarget(nullptr);
@@ -625,7 +629,8 @@ void Game::CheckForRaceCompletion()
 
 		if (m_bestTimeForRun < m_bestTimeFromFile)
 		{
-			WriteNewBestTime();
+			m_previousBestTime = m_bestTimeFromFile;
+			WriteNewBestTimeText();
 		}
 
 		HandleRaceCompletedCondition();
@@ -959,6 +964,16 @@ void Game::HandleKeyPressed(unsigned char keyCode)
 			m_debugViewCarCollider = !m_debugViewCarCollider;
 			break;
 		}
+		case NUM_2:
+		{
+			m_debugPerfEnabled = !m_debugPerfEnabled;
+			break;
+		}
+		case NUM_3:
+		{
+			m_enableImGUI = !m_enableImGUI;
+			break;
+		}
 		case ENTER_KEY:
 		{
 			if (!m_initiateFromMenu)
@@ -1127,7 +1142,10 @@ void Game::Render() const
 	g_renderContext->BeginCamera(*m_UICamera);
 	g_renderContext->BindShader(m_shader);
 
-	RenderDebugInfoOnScreen();
+	if (m_debugPerfEnabled)
+	{
+		RenderDebugInfoOnScreen();
+	}
 
 	g_renderContext->EndCamera();
 
@@ -1485,7 +1503,7 @@ void Game::AddVertsForPlayerTimesInOrder(std::vector<Vertex_PCU>& timeVerts) con
 
 	for (int index = 0; index < m_numConnectedPlayers; index++)
 	{
-		time[index] = m_cars[index]->GetRaceTime();
+		time[index] = (float)m_cars[index]->GetRaceTime();
 		indices[index] = index;
 	}
 
@@ -1581,13 +1599,69 @@ void Game::RenderDebugInfoOnScreen() const
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-void Game::SetupCarHUDsFromSplits() const
+void Game::SetupCarHUDsFromSplits(eSplitMode splitMode) const
 {
-	//Set the ortho and view ports for each of the UI cameras
-	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
+	switch (m_numConnectedPlayers)
 	{
-		Camera& carHUD = m_cars[carIndex]->GetCarHUDCamera();
-		TODO("Make UI ortho splits based on the viewports assigned to the SplitScreen System");
+	case 1:
+	{
+		//We have only 1 player so we should be fine with the viewport being the whole screen
+		m_cars[0]->GetCarHUDCamera().SetViewport(Vec2::ZERO, Vec2::ONE);
+	}
+	break;
+	case 2:
+	{
+		//We have 2 players, check the split mode for 2P and split accordingly
+		if (splitMode == PREFER_VERTICAL_SPLIT)
+		{
+			//We need to split the screen into vertical halfs
+			m_cars[0]->GetCarHUDCamera().SetViewport(SplitScreenSystem::VERTICAL_SPLIT_2P_FIRST_MIN, SplitScreenSystem::VERTICAL_SPLIT_2P_FIRST_MAX);
+			m_cars[1]->GetCarHUDCamera().SetViewport(SplitScreenSystem::VERTICAL_SPLIT_2P_SECOND_MIN, SplitScreenSystem::VERTICAL_SPLIT_2P_SECOND_MAX);
+		}
+		else
+		{
+			//We need to split the screen into horizontal halfs
+			m_cars[0]->GetCarHUDCamera().SetViewport(SplitScreenSystem::HORIZONTAL_SPLIT_2P_FIRST_MIN, SplitScreenSystem::HORIZONTAL_SPLIT_2P_FIRST_MAX);
+			m_cars[1]->GetCarHUDCamera().SetViewport(SplitScreenSystem::HORIZONTAL_SPLIT_2P_SECOND_MIN, SplitScreenSystem::HORIZONTAL_SPLIT_2P_SECOND_MAX);
+		}
+	}
+	break;
+	case 3:
+	{
+		if (splitMode == PREFER_VERTICAL_SPLIT)
+		{
+			m_cars[0]->GetCarHUDCamera().SetViewport(SplitScreenSystem::VERTICAL_SPLIT_3P_FIRST_MIN, SplitScreenSystem::VERTICAL_SPLIT_3P_FIRST_MAX);
+			m_cars[1]->GetCarHUDCamera().SetViewport(SplitScreenSystem::VERTICAL_SPLIT_3P_SECOND_MIN, SplitScreenSystem::VERTICAL_SPLIT_3P_SECOND_MAX);
+			m_cars[2]->GetCarHUDCamera().SetViewport(SplitScreenSystem::VERTICAL_SPLIT_3P_THIRD_MIN, SplitScreenSystem::VERTICAL_SPLIT_3P_THIRD_MAX);
+		}
+		else
+		{
+			m_cars[0]->GetCarHUDCamera().SetViewport(SplitScreenSystem::HORIZONTAL_SPLIT_3P_FIRST_MIN, SplitScreenSystem::HORIZONTAL_SPLIT_3P_FIRST_MAX);
+			m_cars[1]->GetCarHUDCamera().SetViewport(SplitScreenSystem::HORIZONTAL_SPLIT_3P_SECOND_MIN, SplitScreenSystem::HORIZONTAL_SPLIT_3P_SECOND_MAX);
+			m_cars[2]->GetCarHUDCamera().SetViewport(SplitScreenSystem::HORIZONTAL_SPLIT_3P_THIRD_MIN, SplitScreenSystem::HORIZONTAL_SPLIT_3P_THIRD_MAX);
+		}
+	}
+	break;
+	case 4:
+	{
+		if (splitMode == PREFER_VERTICAL_SPLIT)
+		{
+			m_cars[0]->GetCarHUDCamera().SetViewport(SplitScreenSystem::VERTICAL_SPLIT_4P_FIRST_MIN, SplitScreenSystem::VERTICAL_SPLIT_4P_FIRST_MAX);
+			m_cars[1]->GetCarHUDCamera().SetViewport(SplitScreenSystem::VERTICAL_SPLIT_4P_SECOND_MIN, SplitScreenSystem::VERTICAL_SPLIT_4P_SECOND_MAX);
+			m_cars[2]->GetCarHUDCamera().SetViewport(SplitScreenSystem::VERTICAL_SPLIT_4P_THIRD_MIN, SplitScreenSystem::VERTICAL_SPLIT_4P_THIRD_MAX);
+			m_cars[3]->GetCarHUDCamera().SetViewport(SplitScreenSystem::VERTICAL_SPLIT_4P_FOURTH_MIN, SplitScreenSystem::VERTICAL_SPLIT_4P_FOURTH_MAX);
+		}
+		else
+		{
+			m_cars[0]->GetCarHUDCamera().SetViewport(SplitScreenSystem::HORIZONTAL_SPLIT_4P_FIRST_MIN, SplitScreenSystem::HORIZONTAL_SPLIT_4P_FIRST_MAX);
+			m_cars[1]->GetCarHUDCamera().SetViewport(SplitScreenSystem::HORIZONTAL_SPLIT_4P_SECOND_MIN, SplitScreenSystem::HORIZONTAL_SPLIT_4P_SECOND_MAX);
+			m_cars[2]->GetCarHUDCamera().SetViewport(SplitScreenSystem::HORIZONTAL_SPLIT_4P_THIRD_MIN, SplitScreenSystem::HORIZONTAL_SPLIT_4P_THIRD_MAX);
+			m_cars[3]->GetCarHUDCamera().SetViewport(SplitScreenSystem::HORIZONTAL_SPLIT_4P_FOURTH_MIN, SplitScreenSystem::HORIZONTAL_SPLIT_4P_FOURTH_MAX);
+		}
+	}
+	break;
+	default:
+		break;
 	}
 }
 
@@ -1599,9 +1673,55 @@ void Game::DeleteUI()
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+void Game::SetCarHUDColorTargets(ColorTargetView * colorTargetView) const
+{
+	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
+	{
+		m_cars[carIndex]->GetCarHUDCamera().SetColorTarget(colorTargetView);
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 void Game::WriteNewBestTime()
 {
-	throw std::logic_error("The method or operation is not implemented.");
+	//Open the xml file and parse it
+	tinyxml2::XMLDocument timeDoc;
+	timeDoc.LoadFile(m_saveFilePath.c_str());
+
+	if (timeDoc.ErrorID() != tinyxml2::XML_SUCCESS)
+	{
+
+		ERROR_AND_DIE(">> Error save file ");
+		return;
+	}
+	else
+	{
+// 		timeDoc.Clear();
+// 
+// 		XMLElement* root = new XMLElement(&timeDoc);
+// 		XMLElement* child = new XMLElement(&timeDoc);
+// 
+// 		std::string saveString = Stringf("time = %f", m_bestTimeForRun);
+// 		tinyxml2::XMLText* text = new tinyxml2::XMLText(saveString);
+// 
+// 		child->LinkEndChild(text);
+// 		timeDoc.LinkEndChild(root);
+// 		timeDoc.LinkEndChild(child);
+// 		timeDoc.SaveFile("madeByHand.xml");
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::WriteNewBestTimeText()
+{
+	std::ofstream* writeStream = CreateFileWriteBuffer(m_saveFileTextPath);
+	
+	std::string writeString = std::to_string(m_bestTimeForRun);
+
+	writeStream->write(writeString.c_str(), writeString.length());
+	writeStream->flush();
+
+	writeStream->close();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1668,11 +1788,23 @@ void Game::ReadBestTimeFromFile()
 		XMLElement* root = timeDoc.RootElement();
 		XMLElement* elem = root->FirstChildElement("BestTime");
 
+		UNUSED(root);
+		UNUSED(elem);
+
 		if (root->FindAttribute("time"))
 		{
 			m_bestTimeFromFile = ParseXmlAttribute(*root, "time", (float)m_bestTimeFromFile);
 		}
 	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::ReadBestTimeFromTextFile()
+{
+	char* buffer = new char[20];
+	//unsigned long size = 
+	CreateFileReadBuffer(m_saveFileTextPath, &buffer);
+	m_bestTimeFromFile = atof(buffer);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1744,7 +1876,9 @@ void Game::RenderSceneForCarCameras() const
 
 		g_renderContext->EndCamera();
 
-		RenderGearNumber(carIndex);
+		m_cars[carIndex]->RenderUIHUD();
+
+		//RenderGearNumber(carIndex);
 	}
 }
 
@@ -2023,7 +2157,8 @@ void Game::SetFrameColorTargetOnCameras() const
 		//The cars exist and we can set the split screen system's color targets
 		m_splitScreenSystem.SetColorTargets(colorTargetView);
 		m_splitScreenSystem.ComputeViewPortSplits(eSplitMode::PREFER_VERTICAL_SPLIT);
-		SetupCarHUDsFromSplits();
+		SetCarHUDColorTargets(colorTargetView);
+		SetupCarHUDsFromSplits(eSplitMode::PREFER_VERTICAL_SPLIT);
 	}
 }
 
@@ -2078,7 +2213,10 @@ void Game::PostRender()
 	//All screen Debug information
 	//DebugRenderToScreen();
 
-	g_ImGUI->Render();
+	if (m_enableImGUI)
+	{
+		g_ImGUI->Render();
+	}
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -2148,7 +2286,7 @@ void Game::Update(float deltaTime)
 	}
 
 	g_renderContext->m_frameCount++;
-	float currentTime = static_cast<float>(GetCurrentTimeSeconds());
+	//float currentTime = static_cast<float>(GetCurrentTimeSeconds());
 
 	//Update the camera's transform
 	Matrix44 camTransform = Matrix44::MakeFromEuler( m_mainCamera->GetEuler(), m_rotationOrder ); 
@@ -2157,7 +2295,11 @@ void Game::Update(float deltaTime)
 
 	m_racetrackTransform = Matrix44::SetTranslation3D(m_racetrackTranslation, m_racetrackTransform);
 	m_trackTestTransform = Matrix44::SetTranslation3D(m_trackTestTranslation, m_trackTestTransform);
-	UpdateImGUI();
+	
+	if (m_enableImGUI)
+	{
+		UpdateImGUI();
+	}
 
 	UpdateAllCars(deltaTime);
 	CheckForRaceCompletion();

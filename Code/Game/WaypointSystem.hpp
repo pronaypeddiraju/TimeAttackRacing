@@ -22,8 +22,8 @@ public:
 	uint					GetMaxLapCount() const;
 	void					SetMaxLapCount(uint maxLapCount);
 
-	double					GetTotalTime();
-	bool					AreLapsComplete();
+	double					GetTotalTime() const;
+	bool					AreLapsComplete() const;
 
 	void					Startup();
 	void					Update(const Vec3& carPosition);

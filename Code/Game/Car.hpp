@@ -6,6 +6,10 @@
 //Engine Systems
 #include "Engine/Renderer/BitmapFont.hpp"
 
+//------------------------------------------------------------------------------------------------------------------------------
+class Shader;
+
+//------------------------------------------------------------------------------------------------------------------------------
 static std::vector<std::string> CAR_FILE_PATHS = {
 	"/C_5_ExhL_02142.wav",
 	"/C_6_ExhL_02412.wav",
@@ -24,7 +28,7 @@ public:
 	Car();
 	~Car();
 
-	void						StartUp(const Vec3& startPosition, int controllerID);
+	void						StartUp(const Vec3& startPosition, int controllerID, float timeToBeat);
 	void						Update(float deltaTime, bool isInputEnabled = true);
 	void						FixedUpdate(float fixedTime);
 	void						Shutdown();
@@ -55,7 +59,15 @@ public:
 
 	double						GetRaceTime();
 
+	void						RenderUIHUD() const;
 private:
+
+	void						RenderBackgroundBoxes() const;
+	void						RenderLapCounter() const;
+	void						RenderTimeTaken() const;
+	void						RenderTimeToBeat() const;
+	void						RenderGearIndicator() const;
+	void						RenderRevMeter() const;
 
 private:
 	CarController*				m_controller = nullptr;
@@ -73,7 +85,13 @@ private:
 	float						m_HUD_HEIGHT = 150.f;
 
 	BitmapFont*					m_HUDFont = nullptr;
+	float						m_HUDFontHeight = 5.f;
 
-	double						m_raceTime = 0.0f;
+	Shader*						m_HUDshader = nullptr;
+	std::string					m_shaderPath = "default_unlit.xml";
+
+	double						m_raceTime = 0.0;
 	float						m_resetHeight = 2.0f;
+
+	double						m_timeToBeat = 0.0;
 };

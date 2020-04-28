@@ -133,6 +133,7 @@ private:
 	void								CreateBaseBoxForCollisionDetection();
 	void								ResetCarsUsingToolData();
 	void								ReadBestTimeFromFile();
+	void								ReadBestTimeFromTextFile();
 
 	//Async Functionality 
 	void								PerformAsyncLoading();
@@ -181,6 +182,7 @@ private:
 	void								RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numActors, Rgba& color) const;
 
 	//Rendering for Menus
+	void								SetCarHUDColorTargets(ColorTargetView * colorTargetView) const;
 	void								RenderMainMenu() const;	//Uses UIWidget and widget system
 	void								RenderMenuScreen() const;
 	void								RenderRaceCompleted() const;
@@ -191,10 +193,11 @@ private:
 
 	void								RenderGearNumber(int carIndex) const;
 
-	void								SetupCarHUDsFromSplits() const;
+	void								SetupCarHUDsFromSplits(eSplitMode splitMode) const;
 
 	//Shutdown utils
 	void								WriteNewBestTime();
+	void								WriteNewBestTimeText();
 	void								DeleteUI();
 
 private:
@@ -343,6 +346,8 @@ public:
 	// User Interface Variables
 	//------------------------------------------------------------------------------------------------------------------------------
 
+	bool								m_enableImGUI = false;
+
 	float								ui_testSlider = 0.5f;
 	float								ui_cameraClearColor[3] = { 0.f, 0.f, 0.f };
 	bool								ui_testCheck1 = false;
@@ -386,7 +391,7 @@ public:
 	GPUMesh*							m_pxConvexMesh = nullptr;
 	GPUMesh*							m_pxCapMesh = nullptr;
 
-	bool								m_debugViewCarCollider = true;
+	bool								m_debugViewCarCollider = false;
 
 	Vec3								m_wayPointPositions[5] = { Vec3(15.f, 0.f, 10.f),
 																	Vec3(40.f, 0.f, 85.f),
@@ -412,10 +417,13 @@ public:
 	// Waypoint System
 	//------------------------------------------------------------------------------------------------------------------------------
 	bool								m_debugRenderWaypoints = false;
+	bool								m_debugPerfEnabled = false;
 	//Save File data
 	double								m_bestTimeFromFile = 0.0;
 	double								m_bestTimeForRun = 0.0;
+	double								m_previousBestTime = 0.0;
 	std::string							m_saveFilePath = "Data/Gameplay/SaveFile.xml";
+	std::string							m_saveFileTextPath = "Data/Gameplay/BestTime.txt";
 
 	//------------------------------------------------------------------------------------------------------------------------------
 	// Split Screen System
