@@ -153,9 +153,10 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
    // First, we sample from our texture
    float4 texColor = tAlbedo.Sample( sAlbedo, input.uv ) * input.color; 
    
-   float4 normalColor = tNormalMap.Sample( sAlbedo, input.uv );
+   float4 normalColor = tNormalMap.Sample( sNormalMap, input.uv );
 
-   float3 surface_normal = normalColor.xyz * float3(2, 2, 1) - float3(1, 1, 0); 
+   float3 surface_normal = normalColor.rgb * float3(2, 2, 2) - float3(1, 1, 1); 
+   surface_normal = normalize(surface_normal);
 
    float3 vertex_tangent = normalize(input.tangent); 
    float3 vertex_bitan = normalize(input.biTangent); 
@@ -166,6 +167,9 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 
    // if you just go with my matrix format...
    float3 world_normal = mul( surface_normal, surface_to_world ); 
+
+   //HACK to not use Normals
+   world_normal = vertex_normal;
 
    //return NormalToColor(surface_normal);
 
@@ -178,7 +182,6 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 
    lighting_t lighting = GetLighting( CAMERA_POSITION, input.worldPos, world_normal );
 
-   //TO-DO: Add specularity!
    float4 final_color = float4(lighting.diffuse, 1.0f) * texColor;
    final_color += float4(lighting.specular, 0.f); // * sample specular map
    final_color = pow( final_color, 1.0f / GAMMA ); // convert back to sRGB space
@@ -187,8 +190,8 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
    float4 finalColor = final_color * input.color; 
    
    // EMISSIVE (map defaults to "black"); 
-   float4 emissive = tEmissiveMap.Sample( sAlbedo, input.uv ) * GetEmissiveFactor(); 
-   finalColor += float4(emissive.xyz * emissive.w, 0); 
+   //float4 emissive = tEmissiveMap.Sample( sEmissiveMap, input.uv ) * GetEmissiveFactor(); 
+   //finalColor += float4(emissive.xyz * emissive.w, 0); 
 
    //DEBUGGING STUFF
    //float4 finalColor = float4(((normalize(CAMERA_POSITION)) * 0.5f) + 1.f, 0.f);
@@ -196,6 +199,10 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 
    // output it; 
    //return float4(1.f, 0.f, 0.f, 1.f);
-   return finalColor; 
+   //float3 vector_debug_color = (vertex_tangent + 1.f) / 2.f;
+   //float4 rtn = float4(vector_debug_color.rgb, 1.f);
+   //return float4(input.uv, 0.f, 1.f); 
+
+   return finalColor;
 }
 

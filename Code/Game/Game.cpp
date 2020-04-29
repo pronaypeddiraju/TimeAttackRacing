@@ -1703,11 +1703,6 @@ void Game::RestartLevel()
 		//Set all cars to their initial positions
 		controller->SetVehiclePosition(m_startPositions[carIndex]);
 		controller->SetVehicleDefaultOrientation();
-
-		//PxTransform transform;
-		//transform.p = PhysXSystem::VecToPxVector(m_startPositions[carIndex]);
-		//transform.q = PxQuat();
-		//controller->SetVehicleTransform(transform);
 		
 		SetEnableXInput(true);
 	}

@@ -69,26 +69,10 @@ Total Hours Worked: 26 Hours
 	-	[ ] (04/00/2020) Fix track and car scale(NewTask ID: 9)
 	-	[ ] (04/00/2020) Conveyance for player(NewTask ID: 10)
 
-Total Hours Planned: 12 Hours
-Total Hours Worked: X Hours
+Today and Yesterday's tasks to be added here
 
-## WEEK 14: POLISH ARTIFACT
-
-### Plan Proposed:
-
-	-	[3]	Revisit audio(NewTask ID: 11)
-		-	[1]	Add menu audio
-		-	[1]	Implement audio for race start, race end
-		-	[1]	Refine vehicle audio 
-
-	-	[6]	Testing and Debugging all features of the game (NewTask ID: 14)
-
-### Hours Worked:
-
-	-	[ ] (04/00/2020) Revisit audio(NewTask ID: 11)
-	-	[ ] (04/00/2020) Refine art in the game (Changing any textures/models if required) (NewTask ID: 12)
-	-	[ ] (04/00/2020) Implement camera shake on car when bumping into other players (NewTask ID: 13)
-	-	[ ] (04/00/2020) Testing and Debugging all features of the game (NewTask ID: 14)
+	-	
 
 Total Hours Planned: 12 Hours
 Total Hours Worked: X Hours
+

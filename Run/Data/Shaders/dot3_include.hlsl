@@ -81,8 +81,9 @@ lighting_t GetLighting( float3 eye_pos, float3 surface_position, float3 surface_
       float dot3 = max( dot( -light_dir, surface_normal ), 0.0f ); 
 
       float3 diffuse_color = light.color * light.intensity * attenuation * dot3; 
-      //float3 diffuse_color = light.color * light.intensity * 1.0f * dot3; 
-      lighting.diffuse += diffuse_color; 
+      
+      
+      //lighting.diffuse += diffuse_color; 
 
       
       // Specular 
