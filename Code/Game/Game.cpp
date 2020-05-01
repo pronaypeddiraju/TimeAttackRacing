@@ -997,10 +997,12 @@ void Game::HandleKeyPressed(unsigned char keyCode)
 		}
 		case R_KEY:
 		{
+			m_isRaceCompleted = false;
+			RestartLevel();
+
 			if (m_isRaceCompleted)
 			{
-				m_isRaceCompleted = false;
-				RestartLevel();
+				
 			}
 		}
 		break;

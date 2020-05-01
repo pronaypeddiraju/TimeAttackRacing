@@ -225,10 +225,10 @@ private:
 
 	Car*								m_cars[4] = {nullptr, nullptr, nullptr, nullptr};
 	Vec3								m_startPositions[4] = { 
-											Vec3(15.f, 10.f, 0.f),
-											Vec3(15.f, 10.f, -10.f), 
-											Vec3(15.f, 10.f, -20.f), 
-											Vec3(15.f, 10.f, -30.f) };
+											Vec3(18.f, 10.f, 0.f),
+											Vec3(26.f, 10.f, 0.f), 
+											Vec3(18.f, 10.f, -10.f), 
+											Vec3(26.f, 10.f, -10.f) };
 
 public:
 	
@@ -329,7 +329,7 @@ public:
 
 	GPUMesh*							m_trackTestModel = nullptr;
 	GPUMesh*							m_trackCollidersTestModel = nullptr;
-	Vec3								m_trackTestTranslation = Vec3(0.f, -0.f, 0.f);
+	Vec3								m_trackTestTranslation = Vec3(0.f, -0.3f, 0.f);
 	Matrix44							m_trackTestTransform;
 	
 	//------------------------------------------------------------------------------------------------------------------------------
@@ -404,17 +404,17 @@ public:
 
 	bool								m_debugViewCarCollider = false;
 
-	Vec3								m_wayPointPositions[5] = { Vec3(15.f, 0.f, 10.f),
-																	Vec3(40.f, 0.f, 85.f),
-																	Vec3(-35.f, 0.f, 65.f), 
-																	Vec3(-25.f, 0.f, -50.f), 
-																	Vec3(35.f, 0.f, -75.f) };
+	Vec3								m_wayPointPositions[5] = { Vec3(22.5f, 0.f, 10.f),
+																	Vec3(65.f, 0.f, 126.5f),
+																	Vec3(-55.5f, 0.f, 65.f), 
+																	Vec3(-37.5f, 0.f, -50.f), 
+																	Vec3(67.5f, 0.f, -75.f) };
 
-	Vec3								m_wayPointHalfExtents[5] = { Vec3(5.f, 5.f, 1.f),
-																	Vec3(1.f, 5.f, 5.f),
-																	Vec3(5.f, 5.f, 1.f),
-																	Vec3(5.f, 5.f, 1.f),
-																	Vec3(5.f, 5.f, 1.f) };
+	Vec3								m_wayPointHalfExtents[5] = { Vec3(6.5f, 5.f, 1.f),
+																	Vec3(1.f, 5.f, 6.5f),
+																	Vec3(8.5f, 5.f, 1.f),
+																	Vec3(6.5f, 5.f, 1.f),
+																	Vec3(6.5f, 5.f, 1.f) };
 
 	//------------------------------------------------------------------------------------------------------------------------------
 	//Car Camera and other game data
