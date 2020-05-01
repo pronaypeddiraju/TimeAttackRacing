@@ -645,9 +645,12 @@ void Game::CheckForRaceCompletion()
 		{
 			m_previousBestTime = m_bestTimeFromFile;
 			WriteNewBestTimeText();
+			m_timeBeaten = true;
 		}
 
 		HandleRaceCompletedCondition();
+
+		CheckXInputForRestart();
 	}
 }
 
@@ -988,6 +991,18 @@ void Game::HandleKeyPressed(unsigned char keyCode)
 			m_enableImGUI = !m_enableImGUI;
 			break;
 		}
+		case NUM_4:
+		{
+			if (m_splitMode == PREFER_VERTICAL_SPLIT)
+			{
+				m_splitMode = PREFER_HORIZONTAL_SPLIT;
+			}
+			else
+			{
+				m_splitMode = PREFER_VERTICAL_SPLIT;
+			}
+			break;
+		}
 		case ENTER_KEY:
 		{
 			if (!m_initiateFromMenu)
@@ -998,12 +1013,10 @@ void Game::HandleKeyPressed(unsigned char keyCode)
 		}
 		case R_KEY:
 		{
-			m_isRaceCompleted = false;
-			RestartLevel();
-
 			if (m_isRaceCompleted)
 			{
-				
+				m_isRaceCompleted = false;
+				RestartLevel();
 			}
 		}
 		break;
@@ -1165,6 +1178,8 @@ void Game::Render() const
 
 	g_renderContext->BeginCamera(*m_UICamera);
 	g_renderContext->BindShader(m_shader);
+
+	RenderViewportBorders();
 
 	if (m_debugPerfEnabled)
 	{
@@ -1444,6 +1459,84 @@ void Game::RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numAct
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+void Game::RenderViewportBorders() const
+{
+	g_renderContext->BindTextureViewWithSampler(0U, nullptr);
+
+	//Render Screen borders because we should no matter what
+	std::vector<Vertex_PCU> borderVerts;
+	AABB2 box;
+	AABB2 camViewport = m_UICamera->GetViewportInPixels();
+
+	//Top bar
+	box.m_maxBounds = camViewport.m_maxBounds;
+	box.m_minBounds = Vec2(0.f, box.m_maxBounds.y - m_borderWidth * 0.5f);
+	AddVertsForAABB2D(borderVerts, box, Rgba::ORGANIC_DIM_BLUE);
+
+	//Left Bar
+	box.m_minBounds = Vec2::ZERO;
+	box.m_maxBounds = Vec2(m_borderWidth * 0.5f, camViewport.m_maxBounds.y);
+	AddVertsForAABB2D(borderVerts, box, Rgba::ORGANIC_DIM_BLUE);
+
+	//Right bar
+	box.m_minBounds = Vec2(camViewport.m_maxBounds.x - m_borderWidth * 0.5f, 0.f);
+	box.m_maxBounds = camViewport.m_maxBounds;
+	AddVertsForAABB2D(borderVerts, box, Rgba::ORGANIC_DIM_BLUE);
+
+	//bottom bar
+	box.m_minBounds = Vec2::ZERO;
+	box.m_maxBounds = Vec2(camViewport.m_maxBounds.x, m_borderWidth * 0.5f);
+	AddVertsForAABB2D(borderVerts, box, Rgba::ORGANIC_DIM_BLUE);
+
+	//Check the split option used
+	switch (m_splitMode)
+	{
+	case PREFER_VERTICAL_SPLIT:
+	{
+		switch (m_numConnectedPlayers)
+		{
+		case 2:
+		{
+			//Only need 1 slice in the middle vertically
+			box.m_minBounds = Vec2(camViewport.m_maxBounds.x * 0.5f - m_borderWidth * 0.5f, 0.f);
+			box.m_maxBounds = Vec2(camViewport.m_maxBounds.x * 0.5f + m_borderWidth * 0.5f, camViewport.m_maxBounds.y);
+			AddVertsForAABB2D(borderVerts, box, Rgba::ORGANIC_DIM_BLUE);
+		}
+		case 3:
+		{
+			//Can't tell what this will look like. No 3rd controller
+		}
+		default:
+			break;
+		}
+	}
+	break;
+	case PREFER_HORIZONTAL_SPLIT:
+	{
+		switch (m_numConnectedPlayers)
+		{
+		case 2:
+		{
+			//Only need 1 slice in the middle horizontally
+			box.m_minBounds = Vec2(0.f, camViewport.m_maxBounds.y * 0.5f - m_borderWidth * 0.5f);
+			box.m_maxBounds = Vec2(camViewport.m_maxBounds.x, camViewport.m_maxBounds.y * 0.5f + m_borderWidth * 0.5f);
+			AddVertsForAABB2D(borderVerts, box, Rgba::ORGANIC_DIM_BLUE);
+		}
+		case 3:
+		{
+			//Can't tell what this will look like. No 3rd controller
+		}
+		default:
+			break;
+		}
+	}
+	break;
+	}
+
+	g_renderContext->DrawVertexArray(borderVerts);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 void Game::RenderMainMenu() const
 {
 	IntVec2 clientSize = g_windowContext->GetTrueClientBounds();
@@ -1475,7 +1568,7 @@ void Game::RenderMenuScreen() const
 	g_renderContext->DrawVertexArray(backgroundImageVerts);
 
 	//Draw a join message
-	std::string printString = "Press RETURN to start game!";
+	std::string printString = "Press START on your Xbox controller to start game!";
 	Vec2 textBoxOffset = Vec2(400.f, 25.f);
 	std::vector<Vertex_PCU> textVerts;
 	m_menuFont->AddVertsForTextInBox2D(textVerts, AABB2(camMaxBounds * 0.5f - textBoxOffset , camMaxBounds * 0.5f + textBoxOffset), m_menuFontHeight, printString, Rgba::ORGANIC_YELLOW);
@@ -1504,7 +1597,7 @@ void Game::RenderRaceCompleted() const
 	//Draw a screen Overlay
 	std::vector<Vertex_PCU> backgroundImageVerts;
 	g_renderContext->BindTextureViewWithSampler(0U, nullptr);	
-	AddVertsForAABB2D(backgroundImageVerts, AABB2(camMinBounds, camMaxBounds), Rgba(0.f, 0.f, 0.f, 0.45f));
+	AddVertsForAABB2D(backgroundImageVerts, AABB2(camMinBounds, camMaxBounds), Rgba(0.f, 0.f, 0.f, 0.75f));
 	g_renderContext->DrawVertexArray(backgroundImageVerts);
 
 	g_renderContext->BindTextureViewWithSampler(0U, m_menuFont->GetTexture(), SAMPLE_MODE_POINT);
@@ -1514,7 +1607,7 @@ void Game::RenderRaceCompleted() const
 	g_renderContext->DrawVertexArray(timeVerts);
 
 	//Draw a join message
-	std::string printString = "Press R to Restart the game";
+	std::string printString = "Press START button to restart";
 	Vec2 offset = Vec2(camMinBounds.x + 100.f, camMaxBounds.y * 0.5f + 200.f);
 	std::vector<Vertex_PCU> textVerts;
 	m_menuFont->AddVertsForText2D(textVerts, camMinBounds + offset, m_menuFontHeight, printString, Rgba::ORGANIC_RED);
@@ -1559,6 +1652,14 @@ void Game::AddVertsForPlayerTimesInOrder(std::vector<Vertex_PCU>& timeVerts) con
 	AABB2 camBounds = AABB2(m_UICamera->GetOrthoBottomLeft(), m_UICamera->GetOrthoTopRight());
 	Vec2 offset = Vec2(camBounds.m_minBounds.x + 100.f, camBounds.m_maxBounds.y * 0.5f);
 	std::string printString = "";
+
+	//Print the best time
+	if (m_timeBeaten)
+	{
+		printString = Stringf("Previous Best Time : %.2f", m_bestTimeFromFile);
+		m_menuFont->AddVertsForText2D(timeVerts, camBounds.m_minBounds + offset, m_menuFontHeight, printString, Rgba::ORGANIC_GREEN);
+		offset.y -= m_menuFontHeight * 1.5f;
+	}
 
 	for (int playerIndex = 0; playerIndex < m_numConnectedPlayers; playerIndex++)
 	{
@@ -1731,6 +1832,17 @@ void Game::RestartLevel()
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+void Game::CheckXInputForRestart()
+{
+	XboxController controller = g_inputSystem->GetXboxController(0);
+	if (controller.GetButtonState(XBOX_BUTTON_ID_START).IsPressed() && m_isRaceCompleted)
+	{
+		//Restart the game
+		RestartLevel();
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 void Game::SetCarHUDColorTargets(ColorTargetView * colorTargetView) const
 {
 	for (int carIndex = 0; carIndex < m_numConnectedPlayers; carIndex++)
@@ -1888,7 +2000,7 @@ void Game::SetMeshesAndJoinThreads()
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::HandleRaceCompletedCondition()
 {
-	//Disable all user input from Xbox controller (Nice effect where the cars just keep going with their momentum)
+	//Disable all user input from Xbox controller for the cars(Nice effect where the cars just keep going with their momentum)
 	SetEnableXInput(false);
 	//Enable the render method for race completion
 	m_isRaceCompleted = true;
@@ -2214,9 +2326,9 @@ void Game::SetFrameColorTargetOnCameras() const
 	{
 		//The cars exist and we can set the split screen system's color targets
 		m_splitScreenSystem.SetColorTargets(colorTargetView);
-		m_splitScreenSystem.ComputeViewPortSplits(eSplitMode::PREFER_VERTICAL_SPLIT);
+		m_splitScreenSystem.ComputeViewPortSplits(m_splitMode);
 		SetCarHUDColorTargets(colorTargetView);
-		SetupCarHUDsFromSplits(eSplitMode::PREFER_VERTICAL_SPLIT);
+		SetupCarHUDsFromSplits(m_splitMode);
 	}
 }
 
@@ -2275,6 +2387,8 @@ void Game::PostRender()
 	{
 		g_ImGUI->Render();
 	}
+
+	CheckForGameStart();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -2318,10 +2432,32 @@ void Game::PerformFPSCachingAndCalculation(float deltaTime)
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+void Game::CheckForGameStart()
+{
+	XboxController controller = g_inputSystem->GetXboxController(0);
+	KeyButtonState buttonStartState = controller.GetButtonState(XBOX_BUTTON_ID_START);
+	if (buttonStartState.IsPressed())
+	{
+		if (!m_initiateFromMenu)
+		{
+			m_initiateFromMenu = true;
+			InitiateGameSequence();
+		}
+		else if (m_isRaceCompleted)
+		{
+			m_isRaceCompleted = false;
+			RestartLevel();
+		}
+	}
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 void Game::Update(float deltaTime)
 {
 	if (m_numConnectedPlayers == 0)
 		return;	//Currently unsupported for keyboard input
+
+	CheckForGameStart();
 
 	//Finishing up with the loading threads and work
 	//Un-comment when we want to use threaded model loading

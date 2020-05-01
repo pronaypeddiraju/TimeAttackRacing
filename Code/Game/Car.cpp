@@ -222,7 +222,7 @@ void Car::RenderBackgroundBoxes() const
 	Vec2 camMaxBounds = m_carHUD->GetOrthoTopRight();
 
 	Rgba backgroundColor = Rgba::ORGANIC_DIM_BLUE;
-	backgroundColor.a = 0.5f;
+	//backgroundColor.a = 0.5f;
 
 	AABB2 box;
 	
@@ -297,7 +297,7 @@ void Car::RenderTimeTaken() const
 	Vec2 camMaxBounds = m_carHUD->GetOrthoTopRight();
 
 	Vec2 displayArea = camMaxBounds;
-	displayArea.x -= 100.f;
+	displayArea.x -= 90.f;
 	displayArea.y -= m_HUDFontHeight * 2.f;
 
 	std::string printString = Stringf("Time Taken: %.3f", timeTaken);
@@ -324,7 +324,7 @@ void Car::RenderTimeToBeat() const
 	Vec2 camMaxBounds = m_carHUD->GetOrthoTopRight();
 
 	Vec2 displayArea = camMaxBounds;
-	displayArea.x -= 100.f;
+	displayArea.x -= 90.f;
 	displayArea.y = 0.f;
 	displayArea.y += m_HUDFontHeight;
 

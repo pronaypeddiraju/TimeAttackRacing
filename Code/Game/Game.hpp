@@ -100,6 +100,7 @@ public:
 	void								PostRender();
 	
 	void								PerformFPSCachingAndCalculation(float deltaTime);
+	void								CheckForGameStart();
 	void								UpdatePhysXCar(float deltaTime);
 	void								UpdateCarCamera(float deltaTime);
 	
@@ -182,6 +183,8 @@ private:
 	void								RenderPhysXCar(const CarController& carController) const;
 	void								RenderPhysXActors(const std::vector<PxRigidActor*> actors, int numActors, Rgba& color) const;
 
+	void								RenderViewportBorders() const;
+
 	//Rendering for Menus
 	void								SetCarHUDColorTargets(ColorTargetView * colorTargetView) const;
 	void								RenderMainMenu() const;	//Uses UIWidget and widget system
@@ -203,6 +206,7 @@ private:
 
 	//Restart level functionality
 	void								RestartLevel();
+	void								CheckXInputForRestart();
 
 private:
 	bool								m_isGameAlive = false;
@@ -437,11 +441,14 @@ public:
 	double								m_previousBestTime = 0.0;
 	std::string							m_saveFilePath = "Data/Gameplay/SaveFile.xml";
 	std::string							m_saveFileTextPath = "Data/Gameplay/BestTime.txt";
+	bool								m_timeBeaten = false;
 
 	//------------------------------------------------------------------------------------------------------------------------------
 	// Split Screen System
 	//------------------------------------------------------------------------------------------------------------------------------
 	SplitScreenSystem					m_splitScreenSystem;
+	eSplitMode							m_splitMode = eSplitMode::PREFER_VERTICAL_SPLIT;
+	int									m_borderWidth = 20.f;
 
 	//------------------------------------------------------------------------------------------------------------------------------
 	// Vehicle Tool
