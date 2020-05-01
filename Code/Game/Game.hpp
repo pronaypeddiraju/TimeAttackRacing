@@ -275,6 +275,7 @@ public:
 	std::string							m_carMeshPath = "Car/Car.mesh";	
 	std::string							m_wheelMeshPath = "Car/Wheel.mesh";
 	std::string							m_wheelFlippedMeshPath = "Car/WheelFlipped.mesh";
+	std::string							m_treeMeshPath = "foliage/pineAllMeshes.mesh";
 	std::string							m_trackAngledPath = "Track/angled.mesh";
 	std::string							m_trackJumpPath = "Track/jump1.mesh";
 	std::string							m_trackTestPath = "ScaledTrack/ScaledTrack1RoadOnly.mesh";
@@ -323,9 +324,9 @@ public:
 	Vec3								m_racetrackTranslation = Vec3(0.f, 0.f, 0.f);
 	Matrix44							m_racetrackTransform;
 
-	//GPUMesh*							m_trackJumpPiece = nullptr;
-	//Vec3								m_jumpPieceTranslation = Vec3(0.f, 0.f, 0.f);
-	//Matrix44							m_jumpPieceTransform;
+	GPUMesh*							m_treeModel = nullptr;
+	Vec3								m_treeTranslation = Vec3(0.f, 0.f, 0.f);
+	Matrix44							m_treeTransform;
 
 	GPUMesh*							m_trackTestModel = nullptr;
 	GPUMesh*							m_trackCollidersTestModel = nullptr;
@@ -348,6 +349,7 @@ public:
 	//Material
 	Material*							m_couchMaterial = nullptr;
 	Material*							m_defaultMaterial = nullptr;
+	TextureView*						m_floorTexture = nullptr;
 	bool								m_useMaterial = true;
 
 	float								m_emissiveFactor = 0.f;

@@ -185,7 +185,7 @@ void Game::SetupCameras()
 	m_UICamera->SetOrthoView(minWorldBounds, maxWorldBounds);
 	m_devConsoleCamera->SetOrthoView(minWorldBounds, maxWorldBounds);
 
-	m_clearScreenColor = new Rgba(0.f, 0.f, 0.5f, 1.f);
+	m_clearScreenColor = new Rgba(0.755f, 0.964f, 1.f, 1.f);
 }
 
 void Game::SetStartupDebugRenderObjects()
@@ -450,6 +450,7 @@ void Game::PerformSingleThreadLoading()
 	m_carModel = g_renderContext->CreateOrGetMeshFromFile(m_carMeshPath);
 	m_wheelModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelMeshPath);
 	m_wheelFlippedModel = g_renderContext->CreateOrGetMeshFromFile(m_wheelFlippedMeshPath);
+	m_treeModel = g_renderContext->CreateOrGetMeshFromFile(m_treeMeshPath);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1195,6 +1196,10 @@ void Game::RenderRacetrack() const
 	g_renderContext->BindMaterial( m_defaultMaterial);
 	g_renderContext->SetModelMatrix(m_trackTestTransform);
 	g_renderContext->DrawMesh(m_trackCollidersTestModel);
+
+	g_renderContext->BindMaterial(g_renderContext->CreateOrGetMaterialFromFile(m_treeModel->GetDefaultMaterialName()));
+	g_renderContext->SetModelMatrix(m_treeTransform);
+	g_renderContext->DrawMesh(m_treeModel);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1907,14 +1912,14 @@ void Game::RenderSceneForCarCameras() const
 		if (carIndex == 0)
 		{
 			//Only clear the color target view the first time
-			g_renderContext->ClearColorTargets(Rgba(ui_cameraClearColor[0], ui_cameraClearColor[1], ui_cameraClearColor[2], 1.f));
+			g_renderContext->ClearColorTargets(*m_clearScreenColor);
 		}
 
 		RenderRacetrack();
 
 		//Render the Quad
 		g_renderContext->BindMaterial(m_defaultMaterial);
-		g_renderContext->BindTextureViewWithSampler(0U, nullptr);
+		//g_renderContext->BindTextureViewWithSampler(0U, m_floorTexture);
 		g_renderContext->SetModelMatrix(m_baseQuadTransform);
 		g_renderContext->DrawMesh(m_baseQuad);
 
@@ -2595,6 +2600,7 @@ void Game::LoadGameTextures()
 	m_textureTest = g_renderContext->CreateOrGetTextureViewFromFile(m_testImagePath);
 	m_boxTexture = g_renderContext->CreateOrGetTextureViewFromFile(m_boxTexturePath);
 	m_sphereTexture = g_renderContext->CreateOrGetTextureViewFromFile(m_sphereTexturePath);
+	m_floorTexture = g_renderContext->CreateOrGetTextureViewFromFile("ORGANIC_GREEN.png");
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

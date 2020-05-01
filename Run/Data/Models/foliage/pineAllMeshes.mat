@@ -1,0 +1,9 @@
+<material id="foliage/tree"
+  shader="default_lit.xml">
+
+  <diffuse  src="foliage/foliage.color.png" />
+  <normal   src="foliage/foliage.normal.png" />
+
+  <sampler idx="0" type="linear" />
+
+</material>

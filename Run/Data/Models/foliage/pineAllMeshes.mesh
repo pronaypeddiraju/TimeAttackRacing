@@ -1,0 +1,10 @@
+<mesh id="pine01.whole"
+		src="foliage/treesExported.obj"
+		invert="false"
+		tangents="true"
+		scale = "1.f"
+		transform="x y -z">
+
+		<material index="0" src="foliage/pineAllMeshes.mat" />
+
+</mesh>

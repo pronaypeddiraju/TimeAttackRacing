@@ -148,10 +148,32 @@ void WaypointSystem::RenderNextWaypoint() const
 	const WaypointRegionBased* nextWaypoint = &m_waypointList[GetNextWaypointIndex()];
 
 	CPUMesh boxMesh;
-	CPUMeshAddCube(&boxMesh, AABB3(nextWaypoint->GetWaypointMins(), nextWaypoint->GetWaypointMaxs()), Rgba::GREEN);
-	GPUMesh mesh = GPUMesh(g_renderContext);
-	mesh.CreateFromCPUMesh<Vertex_Lit>(&boxMesh, GPU_MEMORY_USAGE_STATIC);
-	g_renderContext->DrawMesh(&mesh);
+
+	CPUMesh postLeftMesh;
+	CPUMesh postRightMesh;
+	CPUMesh postTopMesh;
+
+	Vec3 mins = nextWaypoint->GetWaypointMins();
+	Vec3 maxs = nextWaypoint->GetWaypointMaxs();
+	CPUMeshAddCube(&postLeftMesh, AABB3(mins - Vec3(0.25f, 0.f, 0.25f), mins + Vec3(0.25f, maxs.y * 2.f, 0.25f)), Rgba::ORGANIC_BLUE);
+	CPUMeshAddCube(&postRightMesh, AABB3(Vec3(maxs.x, mins.y, maxs.z) - Vec3(0.25f, 0.f, 0.25f), Vec3(maxs.x, mins.y, maxs.z) + Vec3(0.25f, maxs.y * 2.f, 0.25f)), Rgba::ORGANIC_BLUE);
+
+	Vec3 dir = maxs - mins;
+	dir.y = 0.5f;
+	CPUMeshAddCube(&postTopMesh, AABB3(Vec3(mins.x, maxs.y, mins.z), Vec3(mins.x, maxs.y, mins.z) + dir), Rgba::ORGANIC_BLUE);
+	
+	GPUMesh renderMeshLeftPost = GPUMesh(g_renderContext);
+	renderMeshLeftPost.CreateFromCPUMesh<Vertex_Lit>(&postLeftMesh, GPU_MEMORY_USAGE_STATIC);
+
+	GPUMesh renderMeshRightPost = GPUMesh(g_renderContext);
+	renderMeshRightPost.CreateFromCPUMesh<Vertex_Lit>(&postRightMesh, GPU_MEMORY_USAGE_STATIC);
+	
+	GPUMesh renderMeshTopPost = GPUMesh(g_renderContext);
+	renderMeshTopPost.CreateFromCPUMesh<Vertex_Lit>(&postTopMesh, GPU_MEMORY_USAGE_STATIC);
+
+	g_renderContext->DrawMesh(&renderMeshLeftPost);
+	g_renderContext->DrawMesh(&renderMeshRightPost);
+	g_renderContext->DrawMesh(&renderMeshTopPost);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
