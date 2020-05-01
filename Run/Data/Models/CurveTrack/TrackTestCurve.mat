@@ -1,0 +1,8 @@
+<material id="PhysX/curveMat"
+  shader="default_lit.xml">
+
+  <diffuse  src="CurveTrack/seamLessRoad.jpg" />
+
+  <sampler idx="0" type="linear" />
+
+</material>

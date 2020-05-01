@@ -89,8 +89,21 @@ void Game::StartUp()
 
 	PerformSingleThreadLoading();
 
+	//Load Audio
+	LoadAudio();
+
+	m_textureTest = g_renderContext->CreateOrGetTextureViewFromFile("Data/Images/seamLessRoad.png");
+
 	//Set this to true for now since we are only single threaded
 	m_threadedLoadComplete = true;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void Game::LoadAudio()
+{
+	m_BGMTrack = g_audio->CreateOrGetSound(m_BGMPath);
+	m_BGMTrackPlaybackID = g_audio->PlayAudio(m_BGMTrack, true);
+	g_audio->SetSoundPlaybackVolume(m_BGMTrackPlaybackID, 0.2f);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1171,7 +1184,9 @@ void Game::Render() const
 //------------------------------------------------------------------------------------------------------------------------------
 void Game::RenderRacetrack() const
 {
-	g_renderContext->BindMaterial(g_renderContext->CreateOrGetMaterialFromFile(m_trackTestModel->GetDefaultMaterialName()));
+	std::string matName = m_trackTestModel->GetDefaultMaterialName();
+	g_renderContext->BindMaterial(g_renderContext->CreateOrGetMaterialFromFile(matName));
+	//g_renderContext->BindTextureViewWithSampler(0U, m_textureTest);
 	g_renderContext->SetModelMatrix(m_trackTestTransform);
 	g_renderContext->DrawMesh(m_trackTestModel);
 

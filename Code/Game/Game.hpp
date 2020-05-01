@@ -126,6 +126,7 @@ private:
 	void								CreateInitialLight();
 	void								SetupPhysX();
 	void								CreateUIWidgets();
+	void								LoadAudio();
 
 	void								PerformSingleThreadLoading();
 	void								LoadTrackMeshesOnSceneCreation();
@@ -296,6 +297,13 @@ public:
 	float								m_devConsoleScreenWidth = 0.f;
 	float								m_devConsoleScreenHeight = 0.f;
 
+	//------------------------------------------------------------------------------------------------------------------------------
+	//BGM
+	//------------------------------------------------------------------------------------------------------------------------------
+	SoundID								m_BGMTrack;
+	SoundPlaybackID						m_BGMTrackPlaybackID;
+	std::string							m_BGMPath = "Data/Audio/BGMTrack.mp3";
+
 	// Define the shapes, and how are they positionedin the world; 
 	GPUMesh*							m_baseQuad = nullptr;
 	Matrix44							m_baseQuadTransform;
@@ -321,7 +329,7 @@ public:
 
 	GPUMesh*							m_trackTestModel = nullptr;
 	GPUMesh*							m_trackCollidersTestModel = nullptr;
-	Vec3								m_trackTestTranslation = Vec3(0.f, -0.1f, 0.f);
+	Vec3								m_trackTestTranslation = Vec3(0.f, -0.f, 0.f);
 	Matrix44							m_trackTestTransform;
 	
 	//------------------------------------------------------------------------------------------------------------------------------

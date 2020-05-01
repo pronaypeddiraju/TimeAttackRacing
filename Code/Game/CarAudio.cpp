@@ -297,7 +297,7 @@ void CarAudio::UpdateSimplexMultiTrack()
 				}
 			}
 		}
-		else if(m_carControllerRef->IsControlReleased())
+		else if(m_carControllerRef->IsControlReleased() || m_carControllerRef->GetVehicle()->getRigidDynamicActor()->getLinearVelocity().magnitudeSquared() < 3.f)
 		{
 			for (int j = 0; j < m_numFiles; j++)
 			{

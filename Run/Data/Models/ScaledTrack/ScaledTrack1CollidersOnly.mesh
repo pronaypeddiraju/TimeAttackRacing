@@ -261,6 +261,15 @@
 	<collision index="67" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_RoadPiece_5.obj" physXFlags = "obstacle"/>
 	<collision index="68" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_RoadPiece_6.obj" physXFlags = "obstacle"/>
 	
+	<collision index="93" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_RoadPiece_7.obj" physXFlags = "obstacle"/>
+	<collision index="94" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_RoadPiece_8.obj" physXFlags = "obstacle"/>
+	<collision index="95" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_RoadPiece_9.obj" physXFlags = "obstacle"/>
+	<collision index="96" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_RoadPiece_10.obj" physXFlags = "obstacle"/>
+	<collision index="97" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_RoadPiece_11.obj" physXFlags = "obstacle"/>
+	<collision index="98" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_RoadPiece_12.obj" physXFlags = "obstacle"/>
+	<collision index="297" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_RoadPiece_13.obj" physXFlags = "obstacle"/>
+	<collision index="298" src="ScaledTrack/RampRoadCollisions/ScaledTrack1_Collider_RoadPiece_14.obj" physXFlags = "obstacle"/>
+
 </mesh>
 
 

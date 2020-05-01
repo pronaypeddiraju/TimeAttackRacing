@@ -1,0 +1,256 @@
+newmtl ScaledTrack1RoadOnly:Asphalt
+illum 4
+Kd 0.58 0.58 0.58
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Asphalt2
+illum 4
+Kd 0.58 0.58 0.58
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Asphalt4
+illum 4
+Kd 0.58 0.58 0.58
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Asphalt6
+illum 4
+Kd 0.58 0.58 0.58
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Asphalt8
+illum 4
+Kd 0.58 0.58 0.58
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Asphalt10
+illum 4
+Kd 0.58 0.58 0.58
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Asphalt12
+illum 4
+Kd 0.58 0.58 0.58
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Asphalt14
+illum 4
+Kd 0.58 0.58 0.58
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Asphalt16
+illum 4
+Kd 0.58 0.58 0.58
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Asphalt18
+illum 4
+Kd 0.58 0.58 0.58
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Asphalt20
+illum 4
+Kd 0.58 0.58 0.58
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Asphalt22
+illum 4
+Kd 0.58 0.58 0.58
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Asphalt24
+illum 4
+Kd 0.58 0.58 0.58
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Light_Gray
+illum 4
+Kd 0.89 0.89 0.89
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Light_Gray2
+illum 4
+Kd 0.89 0.89 0.89
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Light_Gray4
+illum 4
+Kd 0.89 0.89 0.89
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Light_Gray6
+illum 4
+Kd 0.89 0.89 0.89
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Light_Gray8
+illum 4
+Kd 0.89 0.89 0.89
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Light_Gray10
+illum 4
+Kd 0.89 0.89 0.89
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Light_Gray12
+illum 4
+Kd 0.89 0.89 0.89
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Light_Gray14
+illum 4
+Kd 0.89 0.89 0.89
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Light_Gray16
+illum 4
+Kd 0.89 0.89 0.89
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Light_Gray18
+illum 4
+Kd 0.89 0.89 0.89
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Light_Gray20
+illum 4
+Kd 0.89 0.89 0.89
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Light_Gray22
+illum 4
+Kd 0.89 0.89 0.89
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Light_Gray24
+illum 4
+Kd 0.89 0.89 0.89
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Sandstone_4
+illum 4
+Kd 0.84 0.70 0.55
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Sandstone_6
+illum 4
+Kd 0.84 0.70 0.55
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Sandstone_8
+illum 4
+Kd 0.84 0.70 0.55
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Sandstone_10
+illum 4
+Kd 0.84 0.70 0.55
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl ScaledTrack1RoadOnly:Sandstone_12
+illum 4
+Kd 0.84 0.70 0.55
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 0.00
+newmtl blinn1SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd seamLessRoad.jpg
+Ni 1.00
+Ks 0.50 0.50 0.50
