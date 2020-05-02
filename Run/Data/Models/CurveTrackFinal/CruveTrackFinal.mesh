@@ -1,0 +1,11 @@
+<mesh id="PhysX/CurveTrack1"
+	src="CurveTrackFinal/CurveTrackFinal.obj"
+	invert="false"
+	tangents="true"
+	scale = "1.f"
+	transform="x y -z"
+	position = "0.f, 0.f, 0.f">
+
+	<material index="0" src="CurveTrackFinal/CurveTrackFinal.mat" />
+
+</mesh>
