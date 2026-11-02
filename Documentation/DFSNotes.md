@@ -3,7 +3,7 @@
 #NOTES:
 
 - Don't make a checkpoint tool, instead just use the 3D software and determine what positions a checkpoint needs to be placed at
-- What the fuck does audio for race cars involve
+- What does audio for race cars involve
 - Can you get some tire particles? Skid marks when drifting for example but all physics based?
 
 #To Do:
@@ -35,8 +35,8 @@
 
 #Juice WRLD
 
-- Add a fucking sky box for fuck sakes
-- Maybe not have the track being fucking white bro
+- Add a sky box
+- Maybe not have the track be plain white
 - Add some more 3Dness to the scene with some placeholder stuff
 - Adding trees may be good? especially in sections around the track
 
